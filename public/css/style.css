@@ -1,0 +1,113 @@
+
+body {
+    font-family: "Poppins", sans-serif;
+    background-color: #f3f4f6;
+    overflow-x: hidden;
+}
+
+#wrapper {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: 280px;
+    margin-left: -280px;
+    background-color: #2d3748;
+    transition: margin 0.25s ease-out;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#sidebar-wrapper .list-group {
+    width: 100%;
+}
+
+.list-group-item {
+    background-color: transparent;
+    color: #cbd5e0;
+    border: none;
+    padding: 15px 25px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none; /* Hilangkan garis bawah link */
+}
+
+.list-group-item:hover {
+    background-color: #4a5568;
+    color: #fff;
+    padding-left: 30px;
+}
+.list-group-item.active {
+    background-color: #facc15;
+    color: #1a202c;
+    font-weight: 600;
+}
+
+#page-content-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+.top-navbar {
+    background-color: #facc15;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* --- RESPONSIVE LOGIC --- */
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+}
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: 0;
+    }
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: -280px;
+    }
+    #wrapper:not(.toggled) #menu-toggle {
+        display: none;
+    }
+    #wrapper.toggled #menu-toggle {
+        display: inline-block;
+    }
+}
+
+/* --- CARD STYLES (Dipakai di Jalur Belajar & Kelas Saya) --- */
+.card-hover {
+    background: white;
+    border-radius: 16px;
+    border: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    border-bottom: 5px solid #facc15;
+}
+.icon-bg {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 8rem;
+    opacity: 0.05;
+    transform: rotate(15deg);
+    transition: 0.3s;
+}
+.card-hover:hover .icon-bg {
+    opacity: 0.1;
+    transform: rotate(0deg) scale(1.1);
+}

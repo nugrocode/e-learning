@@ -1,0 +1,101 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f3f4f6;
+    overflow-x: hidden;
+}
+
+/* --- SIDEBAR STYLING --- */
+#wrapper {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: 280px;
+    margin-left: -280px; /* Default: Sembunyi di Mobile */
+    background-color: #2d3748;
+    transition: margin 0.25s ease-out;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+/* RESPONSIVE LOGIC */
+/* 1. Tampilan Mobile (< 768px) */
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: 0; /* Munculkan sidebar saat toggle di HP */
+}
+
+/* 2. Tampilan Desktop (> 768px) */
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: 0; /* Default Desktop: Muncul */
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: -280px; /* Saat ditoggle: Sembunyi */
+    }
+
+    /* Logika Tombol Burger */
+    #wrapper:not(.toggled) #menu-toggle {
+        display: none;
+    }
+
+    #wrapper.toggled #menu-toggle {
+        display: inline-block;
+    }
+}
+
+#sidebar-wrapper .list-group { width: 100%; }
+
+.list-group-item {
+    background-color: transparent;
+    color: #cbd5e0;
+    border: none;
+    padding: 15px 25px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.list-group-item:hover {
+    background-color: #4a5568;
+    color: #fff;
+    padding-left: 30px;
+}
+
+.list-group-item.active {
+    background-color: #FACC15;
+    color: #1a202c;
+    font-weight: 600;
+}
+
+#page-content-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.top-navbar {
+    background-color: #FACC15;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.info-card {
+    background: #e2e8f0;
+    border-radius: 15px;
+    min-height: 300px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
