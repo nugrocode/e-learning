@@ -64,3 +64,15 @@ Route::post('/ask-ai', [LearningController::class, 'askAi']);
 
 // Route Auto-Sort Kurikulum by AI
 Route::post('/auto-sort-kurikulum/{id}', [LearningController::class, 'autoSortKurikulum']);
+
+// Simpan Diskusi / Komentar Materi
+Route::post('/proses-diskusi', [LearningController::class, 'storeDiscussion']);
+// Hapus Diskusi
+Route::delete('/diskusi/{id}', [LearningController::class, 'destroyDiscussion']);
+
+// --- FITUR PROFIL SAYA ---
+Route::get('/profil', [LearningController::class, 'editProfile']);
+Route::post('/profil/update', [LearningController::class, 'updateProfile']);
+
+// --- FITUR NOTIFIKASI ---
+Route::get('/notifikasi/{id}', [LearningController::class, 'readNotification']);

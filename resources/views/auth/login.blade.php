@@ -51,8 +51,7 @@
 
                 <div class="mb-4">
                     <label class="form-label text-sm font-semibold text-gray-700">Kata Sandi</label>
-                    <input type="password" name="password" class="form-control py-2" placeholder="Password" required
-                        autocomplete="new-password">
+                    <input type="password" name="password" class="form-control py-2" placeholder="Password" required>
                 </div>
 
                 <div class="d-grid gap-2 mb-4">

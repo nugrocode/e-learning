@@ -1,43 +1,66 @@
-
+/* ========================================= */
+/* 1. GLOBAL STYLE                           */
+/* ========================================= */
 body {
     font-family: "Poppins", sans-serif;
     background-color: #f3f4f6;
-    overflow-x: hidden;
+    overflow-x: hidden; /* Mencegah scroll horizontal body */
 }
 
 #wrapper {
     display: flex;
     width: 100%;
     height: 100vh;
-    overflow: hidden;
+    overflow: hidden; /* Wrapper utama tidak boleh scroll */
+    position: relative; /* Penting untuk overlay mobile */
 }
 
+/* ========================================= */
+/* 2. SIDEBAR STYLE                          */
+/* ========================================= */
 #sidebar-wrapper {
     min-height: 100vh;
     width: 280px;
-    margin-left: -280px;
-    background-color: #2d3748;
-    transition: margin 0.25s ease-out;
+    background-color: #2d3748; /* Dark Grey */
+    color: #fff;
+    transition: all 0.3s ease-in-out;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1050; /* Z-Index tinggi agar di atas navbar saat mobile */
+    position: fixed; /* Default fixed untuk kestabilan overlay */
+    left: -280px; /* Default sembunyi di kiri */
+    height: 100%;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Header Sidebar (Logo Area) */
+#sidebar-wrapper .sidebar-heading {
+    height: 80px; /* Tinggi Fix Desktop */
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #sidebar-wrapper .list-group {
     width: 100%;
+    padding-top: 10px;
+    overflow-y: auto; /* Menu bisa discroll */
 }
 
+/* Link Sidebar */
 .list-group-item {
     background-color: transparent;
     color: #cbd5e0;
     border: none;
     padding: 15px 25px;
-    font-size: 0.95rem;
+    font-size: 0.95rem; /* Ukuran Default Desktop */
     transition: all 0.3s;
     display: flex;
     align-items: center;
     gap: 12px;
-    text-decoration: none; /* Hilangkan garis bawah link */
+    text-decoration: none;
 }
 
 .list-group-item:hover {
@@ -45,69 +68,173 @@ body {
     color: #fff;
     padding-left: 30px;
 }
+
 .list-group-item.active {
-    background-color: #facc15;
+    background-color: #F7C806; /* Kuning Emas */
     color: #1a202c;
     font-weight: 600;
 }
 
+/* ========================================= */
+/* 3. KONTEN KANAN (MAIN CONTENT)            */
+/* ========================================= */
 #page-content-wrapper {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-}
-.top-navbar {
-    background-color: #facc15;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: absolute; /* Supaya tidak terdorong sidebar saat mode overlay */
+    padding-left: 0;
+    transition: all 0.3s ease-in-out;
+    height: 100vh;
+    overflow-y: auto; /* Scroll konten disini */
+
+    /* Hilangkan Tampilan Scrollbar tapi Fungsi Tetap Ada */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-/* --- RESPONSIVE LOGIC --- */
-#wrapper.toggled #sidebar-wrapper {
-    margin-left: 0;
+#page-content-wrapper::-webkit-scrollbar {
+    display: none;
 }
+
+/* Navbar Atas */
+.top-navbar {
+    height: 80px; /* Tinggi Fix Desktop (Sama dengan Sidebar Heading) */
+    background-color: #F7C806 !important; /* Warna Kuning Emas */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+/* Tombol Hamburger */
+#menu-toggle {
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
+    color: #1a202c;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 15px;
+}
+
+/* Utility Class: Card Hover Effect */
+.card-hover {
+    background: white;
+    border-radius: 12px;
+    transition: transform 0.3s;
+}
+.card-hover:hover {
+    transform: translateY(-5px);
+}
+
+/* ========================================= */
+/* 4. RESPONSIVE LOGIC (MEDIA QUERIES)       */
+/* ========================================= */
+
+/* --- TAMPILAN DESKTOP / LAPTOP (> 768px) --- */
 @media (min-width: 768px) {
     #sidebar-wrapper {
-        margin-left: 0;
+        left: 0; /* Sidebar Muncul */
+        position: relative; /* Mode Dorong (Relative) */
     }
+
+    #page-content-wrapper {
+        position: relative;
+        margin-left: 0;
+        width: 100%;
+        flex: 1; /* Isi ruang sisa */
+    }
+
+    /* Saat Desktop Ditoggle -> Sidebar Sembunyi ke Kiri */
     #wrapper.toggled #sidebar-wrapper {
         margin-left: -280px;
     }
-    #wrapper:not(.toggled) #menu-toggle {
-        display: none;
-    }
-    #wrapper.toggled #menu-toggle {
-        display: inline-block;
-    }
+
+    /* Sembunyikan tombol close sidebar di desktop */
+    #sidebar-close { display: none; }
 }
 
-/* --- CARD STYLES (Dipakai di Jalur Belajar & Kelas Saya) --- */
-.card-hover {
-    background: white;
-    border-radius: 16px;
-    border: none;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+/* --- TAMPILAN MOBILE / TABLET (< 768px) --- */
+@media (max-width: 768px) {
+    #sidebar-wrapper {
+        left: -280px; /* Default Sembunyi */
+        position: fixed; /* Mode Overlay (Melayang) */
+        box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+    }
+
+    #page-content-wrapper {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    /* Saat Mobile Ditoggle -> Sidebar Masuk */
+    #wrapper.toggled #sidebar-wrapper {
+        left: 0;
+    }
+
+    /* Backdrop Hitam Transparan saat Menu Terbuka */
+    #wrapper.toggled::after {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040; /* Di bawah sidebar, di atas konten */
+    }
+
+    /* Kunci scroll body saat menu terbuka */
+    body.sidebar-open {
+        overflow: hidden;
+    }
+
+    /* Penyesuaian Font & Padding Mobile Standard */
+    .top-navbar { padding: 0 1rem; }
+    .sidebar-heading { padding: 0 1rem; }
+    .list-group-item { font-size: 0.9rem; padding: 12px 20px; }
+
+    /* Judul Halaman Responsif */
+    h2 { font-size: 1.25rem !important; }
+    h3 { font-size: 1.1rem !important; }
+    p { font-size: 0.9rem !important; }
 }
-.card-hover:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-    border-bottom: 5px solid #facc15;
-}
-.icon-bg {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    font-size: 8rem;
-    opacity: 0.05;
-    transform: rotate(15deg);
-    transition: 0.3s;
-}
-.card-hover:hover .icon-bg {
-    opacity: 0.1;
-    transform: rotate(0deg) scale(1.1);
+
+/* --- KHUSUS HP LAYAR KECIL (iPhone SE, S8, dll) Max Width 400px --- */
+@media (max-width: 400px) {
+    /* 1. Perkecil Navbar Height & Padding agar tidak gepeng */
+    .top-navbar {
+        height: 65px !important;
+        padding: 0 10px !important;
+    }
+
+    /* 2. Sesuaikan Header Sidebar */
+    .sidebar-heading {
+        height: 65px !important;
+        padding: 0 15px !important;
+    }
+
+    /* 3. Font Judul Halaman Lebih Kecil */
+    h1 { font-size: 1.25rem !important; }
+    h2 { font-size: 1.15rem !important; }
+    h3 { font-size: 1rem !important; }
+
+    /* 4. Text Paragraf, Link, Div diperkecil */
+    p, a, span, div {
+        font-size: 0.85rem !important;
+    }
+
+    /* 5. Padding Container Konten Dirapatkan */
+    .container-fluid.px-4 {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    /* 6. Card Padding Dikurangi */
+    .card-hover, .bg-white {
+        padding: 15px !important;
+    }
+
+    /* 7. Ukuran Ikon */
+    .bi { font-size: 1rem !important; }
+    #menu-toggle { font-size: 1.4rem !important; }
 }
