@@ -15,13 +15,25 @@ use App\Models\QuizScore;
 use App\Models\QuizQuestion;
 use App\Models\Discussion;
 use App\Models\User;
-use App\Models\Notification; // Pastikan Model Notification di-import
+use App\Models\Notification;
+use App\Models\Announcement; // [BARU] Import Model Announcement
 
 class LearningController extends Controller
 {
     // ==========================================================
     // 1. FITUR UTAMA PEMBELAJARAN (VIEW)
     // ==========================================================
+
+    // [BARU] Halaman Dashboard / Beranda (Papan Informasi)
+    public function dashboard()
+    {
+        // Ambil pengumuman yang aktif (is_active = 1), urutkan dari yang terbaru
+        $announcements = Announcement::where('is_active', true)
+                                     ->latest() // Sama dengan orderBy('created_at', 'desc')
+                                     ->get();
+
+        return view('user.dashboard', compact('announcements'));
+    }
 
     // Halaman Pilih Konsentrasi (Jalur Belajar)
     public function index()
@@ -355,6 +367,10 @@ class LearningController extends Controller
         return view('user.diskusi');
     }
 
+    // original version
+
+
+    // jaksel vesion
     public function askAi(Request $request)
     {
         $pesan_user = $request->input('message');
@@ -362,20 +378,38 @@ class LearningController extends Controller
 
         if (!$apiKey) return response()->json(['reply' => "Error: API Key belum dipasang."]);
 
+        // INSTRUKSI PERSONA "ANAK JAKSEL"
+        $systemInstruction = "
+            Role: Lo adalah asisten AI E-Learning yang 'Anak Jaksel' banget.
+
+            Style Bicara:
+            1. Gunakan campuran Bahasa Indonesia dan Inggris (Code-mixing).
+            2. Gunakan kata-kata khas seperti: 'Which is', 'Literally', 'Basically', 'Prefer', 'Jujurly', 'Even', 'At least'.
+            3. Nada bicara santai, asik, tapi tetap insightful (berwawasan).
+
+            Rules:
+            1. KALAU CUMA BASA-BASI: Jawab singkat aja, to the point. Gak usah deep banget.
+            2. KALAU DITANYA MATERI/CODING: Jelasin secara deep learning tapi bahasanya tetap ringan biar user mudah grasp konsepnya.
+            3. Format jawaban tetap Markdown ya.
+        ";
+
+        // Gabungkan instruksi dengan pesan user
+        $finalPrompt = $systemInstruction . "\n\nUser nanya: " . $pesan_user;
+
         try {
             $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}";
             $response = Http::withHeaders(['Content-Type' => 'application/json'])->post($url, [
-                'contents' => [['parts' => [['text' => "Jawablah dengan format Markdown. Pertanyaan: " . $pesan_user]]]]
+                'contents' => [['parts' => [['text' => $finalPrompt]]]]
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                $jawaban = $data['candidates'][0]['content']['parts'][0]['text'] ?? "Maaf, saya bingung.";
+                $jawaban = $data['candidates'][0]['content']['parts'][0]['text'] ?? "Sorry, gue lagi lost connection nih.";
                 return response()->json(['reply' => $jawaban]);
             }
-            return response()->json(['reply' => "Gagal: " . $response->body()]);
+            return response()->json(['reply' => "Gagal connect ke server."]);
         } catch (\Exception $e) {
-            return response()->json(['reply' => "Koneksi Error."]);
+            return response()->json(['reply' => "Connection Error guys."]);
         }
     }
 

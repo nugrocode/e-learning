@@ -4,26 +4,25 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LearningController;
 
-
-
-// --- 1. OTENTIKASI (Login/Logout) ---
+// ==========================================================
+// 1. OTENTIKASI (Login/Logout)
+// ==========================================================
 Route::get('/', [AuthController::class, 'index']);
 Route::get('/login', [AuthController::class, 'index'])->name('login');
 Route::post('/login-proses', [AuthController::class, 'login']);
 Route::get('/logout', [AuthController::class, 'logout']);
 
 
-// --- 2. DASHBOARD ---
-Route::get('/dashboard', function () {
-    // Cek Session Manual
-    if (!session()->has('status') || session('status') != 'login') {
-        return redirect('/login')->with('error', 'Silakan login dulu!');
-    }
-    return view('user.dashboard');
-});
+// ==========================================================
+// 2. DASHBOARD (FIXED)
+// ==========================================================
+// Menggunakan Controller agar data $announcements terkirim ke view
+Route::get('/dashboard', [LearningController::class, 'dashboard']);
 
 
-// --- 3. FITUR PEMBELAJARAN ---
+// ==========================================================
+// 3. FITUR PEMBELAJARAN
+// ==========================================================
 
 // Halaman Daftar Jalur Belajar (Pilih Konsentrasi)
 Route::get('/jalur-belajar', [LearningController::class, 'index']);
@@ -36,7 +35,9 @@ Route::get('/mata-kuliah/{id}', [LearningController::class, 'showCourses']);
 Route::get('/belajar/{course_id}/{urutan?}', [LearningController::class, 'belajar']);
 
 
-// --- 4. PROSES LOGIKA (POST) ---
+// ==========================================================
+// 4. PROSES LOGIKA (POST)
+// ==========================================================
 
 // Simpan Progress (Saat tombol "Lanjut" diklik)
 Route::post('/proses-progress', [LearningController::class, 'storeProgress']);
@@ -53,14 +54,16 @@ Route::get('/kelas-saya', [LearningController::class, 'myClasses']);
 // Route Bantuan
 Route::get('/bantuan', [LearningController::class, 'bantuan']);
 
-// --- FITUR AI ASSISTANT (CHATBOT) ---
+
+// ==========================================================
+// 5. FITUR AI & DISKUSI
+// ==========================================================
 
 // 1. Route untuk membuka halaman chatting
 Route::get('/diskusi', [LearningController::class, 'diskusi']);
 
 // 2. Route API untuk memproses pertanyaan ke Gemini (AJAX)
 Route::post('/ask-ai', [LearningController::class, 'askAi']);
-
 
 // Route Auto-Sort Kurikulum by AI
 Route::post('/auto-sort-kurikulum/{id}', [LearningController::class, 'autoSortKurikulum']);
@@ -70,9 +73,12 @@ Route::post('/proses-diskusi', [LearningController::class, 'storeDiscussion']);
 // Hapus Diskusi
 Route::delete('/diskusi/{id}', [LearningController::class, 'destroyDiscussion']);
 
-// --- FITUR PROFIL SAYA ---
+
+// ==========================================================
+// 6. FITUR PROFIL & NOTIFIKASI
+// ==========================================================
 Route::get('/profil', [LearningController::class, 'editProfile']);
 Route::post('/profil/update', [LearningController::class, 'updateProfile']);
 
-// --- FITUR NOTIFIKASI ---
+// Baca Notifikasi
 Route::get('/notifikasi/{id}', [LearningController::class, 'readNotification']);

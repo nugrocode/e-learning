@@ -58,7 +58,7 @@
                 </a>
 
                 <a href="{{ url('/diskusi') }}" class="list-group-item list-group-item-action {{ Request::is('diskusi*') ? 'active' : '' }}">
-                    <i class="bi bi-chat-left-text-fill text-lg"></i> Diskusi
+                    <i class="bi bi-chat-left-text-fill text-lg"></i> Diskusi Dengan AI
                 </a>
             </div>
 

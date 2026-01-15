@@ -4,9 +4,10 @@
 
 @push('styles')
     <style>
-        /* --- AREA CHAT (Responsif Height) --- */
+        /* --- AREA CHAT (Responsif Height Diperbaiki) --- */
         .chat-container {
-            height: 70vh; /* Default Laptop */
+            /* [PERBAIKAN] Tinggi dikurangi agar input box terlihat tanpa scroll halaman */
+            height: 60vh;
             overflow-y: auto;
             padding: 20px;
             background-color: #f8fafc;
@@ -24,7 +25,7 @@
         }
 
         .message-content {
-            max-width: 80%; /* Laptop */
+            max-width: 80%;
             padding: 12px 16px;
             border-radius: 12px;
             font-size: 0.95rem;
@@ -53,34 +54,28 @@
         }
         .message.ai .avatar { margin-right: 10px; }
 
-        /* Avatar */
+        /* Avatar Container */
         .avatar {
             width: 35px; height: 35px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 1rem; flex-shrink: 0;
+            overflow: hidden; /* Agar gambar tidak keluar lingkaran */
         }
         .avatar-ai { background: #10b981; color: white; }
         .avatar-user { background: #cbd5e1; color: #475569; }
 
-        /* MARKDOWN (Code Block) */
-        .markdown-body pre {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 10px;
-            border-radius: 6px;
-            overflow-x: auto;
-            font-size: 0.85em;
-            margin: 10px 0;
+        /* [PERBAIKAN] Style untuk gambar profil user */
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        .markdown-body p { margin-bottom: 0.5rem; }
 
-        /* ANIMASI TYPING */
-        .typing-indicator span {
-            display: inline-block; width: 5px; height: 5px;
-            background-color: #94a3b8; border-radius: 50%;
-            animation: typing 1.4s infinite both; margin: 0 1px;
-        }
+        /* MARKDOWN & ANIMASI (Tetap sama) */
+        .markdown-body pre { background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 6px; overflow-x: auto; font-size: 0.85em; margin: 10px 0; }
+        .markdown-body p { margin-bottom: 0.5rem; }
+        .typing-indicator span { display: inline-block; width: 5px; height: 5px; background-color: #94a3b8; border-radius: 50%; animation: typing 1.4s infinite both; margin: 0 1px; }
         .typing-indicator span:nth-child(1) { animation-delay: 0s; }
         .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
         .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
@@ -90,17 +85,12 @@
         /* --- RESPONSIVE MOBILE FIX --- */
         @media (max-width: 768px) {
             .chat-container {
-                height: 65vh; /* Kurangi tinggi di HP biar keyboard aman */
+                /* [PERBAIKAN] Tinggi di HP dikurangi lagi agar keyboard aman */
+                height: 50vh;
                 padding: 15px;
             }
-            .message-content {
-                max-width: 90%; /* Bubble lebih lebar di HP */
-                font-size: 0.85rem;
-                padding: 10px 14px;
-            }
-            .avatar {
-                width: 30px; height: 30px; font-size: 0.8rem;
-            }
+            .message-content { max-width: 90%; font-size: 0.85rem; padding: 10px 14px; }
+            .avatar { width: 30px; height: 30px; font-size: 0.8rem; }
         }
     </style>
 @endpush
@@ -109,13 +99,13 @@
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10">
 
-            {{-- Header Chat (Responsif) --}}
+            {{-- Header Chat --}}
             <div class="d-flex align-items-center gap-3 mb-3 pt-2">
                 <div class="bg-green-100 p-2 md:p-3 rounded-full text-green-700">
                     <i class="bi bi-robot text-xl md:text-2xl"></i>
                 </div>
                 <div>
-                    <h2 class="font-bold text-xl md:text-2xl text-gray-800 m-0">AI Assistant (Gemini)</h2>
+                    <h2 class="font-bold text-xl md:text-2xl text-gray-800 m-0">AI Assistant</h2>
                     <p class="text-gray-500 text-xs md:text-sm m-0">Tanyakan apa saja seputar perkuliahan atau kodingan.</p>
                 </div>
             </div>
@@ -126,7 +116,7 @@
                     <div class="avatar avatar-ai"><i class="bi bi-stars"></i></div>
                     <div class="message-content">
                         Halo, {{ session('nama') }}! 👋 <br>
-                        Saya asisten virtual pintar. Ada yang bisa saya bantu?
+                        Saya asisten virtual pintar. Ada yang bisa saya bantu hari ini?
                     </div>
                 </div>
             </div>
@@ -159,16 +149,37 @@
         const chatForm = document.getElementById('chatForm');
         const userInput = document.getElementById('userVal');
 
+        // [PERBAIKAN] Ambil Foto User dari Session PHP ke JavaScript
+        const userPhotoUrl = "{{ session('foto') && session('foto') != 'default.png' ? asset('images/'.session('foto')) : '' }}";
+
+        // Fungsi Scroll ke Bawah
         function scrollToBottom() {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
+
+        // Jalankan scroll saat halaman dimuat
+        window.onload = scrollToBottom;
 
         // Tambah Pesan ke Chat
         function appendMessage(role, text) {
             const isUser = role === 'user';
             const alignClass = isUser ? 'user' : 'ai';
             const avatarClass = isUser ? 'avatar-user' : 'avatar-ai';
-            const icon = isUser ? '<i class="bi bi-person-fill"></i>' : '<i class="bi bi-stars"></i>';
+
+            // [PERBAIKAN] Logika Icon / Foto Profil
+            let icon;
+            if (isUser) {
+                // Jika user punya foto, pakai fotonya
+                if (userPhotoUrl) {
+                    icon = `<img src="${userPhotoUrl}" alt="User">`;
+                } else {
+                    // Jika tidak, pakai icon default
+                    icon = '<i class="bi bi-person-fill"></i>';
+                }
+            } else {
+                // Icon untuk AI
+                icon = '<i class="bi bi-stars"></i>';
+            }
 
             // Format teks (User: teks biasa, AI: Markdown)
             let contentHtml = isUser ? text : marked.parse(text);
@@ -237,7 +248,7 @@
 
             } catch (error) {
                 removeTyping();
-                appendMessage('ai', "Maaf, terjadi kesalahan koneksi.");
+                appendMessage('ai', "Maaf, terjadi kesalahan koneksi. Pastikan API Key benar.");
             }
         });
     </script>

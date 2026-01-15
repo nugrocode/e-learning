@@ -43,22 +43,6 @@
             <h2 class="font-bold text-xl md:text-2xl text-gray-800 m-0">Mata Kuliah</h2>
             <p class="text-gray-600 m-0 text-sm md:text-base">Konsentrasi: <span class="font-semibold text-blue-900">{{ $concentration->nama_konsentrasi }}</span></p>
         </div>
-
-        <div class="d-flex align-items-center gap-2 w-full md:w-auto">
-            <form action="{{ url('/auto-sort-kurikulum/' . $concentration->id) }}" method="POST" class="w-full md:w-auto">
-                @csrf
-                <button type="submit"
-                    class="btn btn-warning text-blue-900 font-bold shadow-sm d-flex align-items-center justify-content-center gap-2 hover:bg-yellow-400 transition w-full md:w-auto py-2 text-sm md:text-base"
-                    onclick="return confirm('Apakah Anda yakin? AI akan menganalisis dan menyusun ulang urutan semua mata kuliah di konsentrasi ini berdasarkan tingkat kesulitan.')">
-                    <i class="bi bi-stars text-lg"></i>
-                    <span>Susun Kurikulum (AI)</span>
-                </button>
-            </form>
-
-            <div class="bg-white p-2 rounded-full shadow-sm border d-none d-md-block">
-                <i class="bi bi-bookmark-star-fill text-2xl md:text-3xl text-yellow-500"></i>
-            </div>
-        </div>
     </div>
 
     {{-- Grid Mata Kuliah --}}
@@ -74,12 +58,7 @@
                 <div class="card-hover p-3 md:p-4 h-100 shadow-sm border rounded-xl bg-white position-relative"
                     style="border-left: 5px solid #2d3748;">
 
-                    {{-- Badge Urutan --}}
-                    <div class="position-absolute top-0 end-0 mt-2 me-2">
-                        <span class="badge bg-gray-100 text-gray-500 rounded-pill border text-[10px] md:text-xs">
-                            Urutan: {{ $mk->urutan }}
-                        </span>
-                    </div>
+                    {{-- [DIHAPUS] Badge Urutan sudah dihilangkan dari sini --}}
 
                     <div class="mb-4">
                         <div class="d-flex justify-content-between mb-2">
