@@ -14,60 +14,65 @@
         @forelse($concentrations as $item)
             <div class="col-12 col-md-6 col-lg-4">
                 {{-- CARD WRAPPER --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-yellow-400 transition-all duration-300 h-100 flex flex-col group overflow-hidden">
-
+                {{-- Added 'relative' class to fix stretched-link overlap issue --}}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-100 d-flex flex-column hover:shadow-md transition-all duration-300 group relative">
+                    
                     {{-- 1. BAGIAN GAMBAR (THUMBNAIL) --}}
-                    <a href="{{ url('/mata-kuliah/' . $item->id) }}" class="block relative h-48 overflow-hidden bg-gray-100">
-                        {{-- Logika Gambar: Database -> Fallback Random --}}
-                        <img src="{{ $item->gambar ? asset('uploads/concentrations/' . $item->gambar) : 'https://source.unsplash.com/600x400/?coding,technology&sig=' . $item->id }}"
-                             alt="{{ $item->nama_konsentrasi }}"
-                             class="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105"
-                             onerror="this.src='https://via.placeholder.com/600x400?text=UKI+Toraja'">
+                    <a href="{{ url('/mata-kuliah/' . $item->id) }}" class="relative h-48 bg-gray-100 overflow-hidden block">
+                        @if($item->gambar)
+                            {{-- FIX PATH: Menggunakan folder 'images/' sesuai Admin --}}
+                            <img src="{{ asset('images/' . $item->gambar) }}" 
+                                 alt="{{ $item->nama_konsentrasi }}"
+                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        @else
+                            {{-- Fallback Image --}}
+                            <div class="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
+                                <i class="bi bi-image text-5xl opacity-50"></i>
+                            </div>
+                        @endif
+                        
+                        {{-- Overlay Gradient Halus --}}
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
 
-                        {{-- Overlay halus saat hover --}}
-                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+                        {{-- Badge Total MK --}}
+                        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1">
+                            <i class="bi bi-book-half text-blue-600"></i> {{ $item->total_mk ?? 0 }} Mata Kuliah
+                        </div>
                     </a>
 
                     {{-- 2. BAGIAN KONTEN --}}
-                    <div class="p-4 md:p-5 flex flex-col flex-grow-1">
-
+                    <div class="p-4 flex-grow-1 d-flex flex-column">
                         {{-- Judul --}}
-                        <h3 class="font-bold text-lg md:text-xl text-gray-800 mb-2 leading-tight group-hover:text-blue-900 transition-colors">
-                            <a href="{{ url('/mata-kuliah/' . $item->id) }}" class="text-decoration-none text-inherit">
+                        <h5 class="font-bold text-lg text-gray-800 mb-2 group-hover:text-blue-900 transition-colors">
+                            {{-- stretched-link akan aman karena parent punya class 'relative' --}}
+                            <a href="{{ url('/mata-kuliah/' . $item->id) }}" class="text-decoration-none text-inherit stretched-link">
                                 {{ $item->nama_konsentrasi }}
                             </a>
-                        </h3>
-
-                        {{-- Metadata Kecil (Opsional: Jumlah SKS/Modul jika nanti ada) --}}
-                        <div class="d-flex align-items-center gap-3 text-xs md:text-sm text-gray-500 mb-3">
-                            <span class="flex items-center gap-1">
-                                <i class="bi bi-collection-play-fill text-yellow-500"></i> Kurikulum Tersedia
-                            </span>
-                        </div>
+                        </h5>
 
                         {{-- Deskripsi --}}
-                        <p class="text-sm text-gray-500 line-clamp-3 mb-0 flex-grow-1 leading-relaxed">
+                        <p class="text-sm text-gray-500 line-clamp-3 mb-4 flex-grow-1 leading-relaxed">
                             {{ $item->deskripsi ?? 'Pelajari materi ini untuk meningkatkan skill teknis Anda secara terstruktur.' }}
                         </p>
 
-                        {{-- 3. FOOTER LINK (Kanan Bawah) --}}
-                        <div class="mt-4 text-end border-t border-gray-100 pt-3">
-                            <a href="{{ url('/mata-kuliah/' . $item->id) }}" class="text-decoration-none font-bold text-blue-900 text-sm md:text-base hover:text-yellow-600 transition-colors inline-flex items-center gap-2">
-                                Lihat Kelas <i class="bi bi-arrow-right"></i>
-                            </a>
+                        {{-- Tombol Aksi (Footer Card) --}}
+                        <div class="pt-3 border-t mt-auto">
+                            <div class="btn btn-light w-100 font-bold text-blue-900 text-sm hover:bg-blue-50 transition border-blue-100 flex items-center justify-center gap-2">
+                                Mulai Belajar <i class="bi bi-arrow-right"></i>
+                            </div>
                         </div>
                     </div>
-
                 </div>
             </div>
+
         @empty
             {{-- EMPTY STATE --}}
             <div class="col-12 text-center py-5">
-                <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm d-inline-block border border-dashed border-gray-300">
-                    <i class="bi bi-grid-fill text-4xl md:text-5xl text-gray-300 mb-3 d-block"></i>
-                    <h5 class="text-gray-700 font-bold text-base md:text-lg">Belum Ada Kelas</h5>
-                    <p class="text-xs md:text-sm text-gray-400 mb-0">Silakan hubungi admin prodi.</p>
+                <div class="d-inline-block p-5 rounded-full bg-gray-50 mb-4 border border-dashed border-gray-200">
+                    <i class="bi bi-diagram-3 text-5xl text-gray-300"></i>
                 </div>
+                <h5 class="font-bold text-gray-600">Belum ada Konsentrasi</h5>
+                <p class="text-gray-400 text-sm">Silakan hubungi admin untuk menambahkan prodi baru.</p>
             </div>
         @endforelse
     </div>

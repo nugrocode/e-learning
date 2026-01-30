@@ -10,6 +10,13 @@ class AuthController extends Controller
 {
     public function index()
     {
+        // Jika user sudah login, langsung lempar ke dashboard sesuai role
+        if (Session::has('status') && Session::get('status') == 'login') {
+            $role = Session::get('role');
+            if ($role == 'admin') return redirect('/admin/dashboard');
+            if ($role == 'dosen') return redirect('/dosen/dashboard');
+            return redirect('/dashboard');
+        }
         return view('auth.login');
     }
 
@@ -17,7 +24,8 @@ class AuthController extends Controller
     {
         // 1. Tangkap Input
         $nim = $request->input('nim');
-        $password = md5($request->input('password')); // Hash inputan dengan MD5
+        // Catatan: Menggunakan MD5 sesuai database kamu (meskipun tidak disarankan untuk production modern)
+        $password = md5($request->input('password')); 
 
         // 2. Cari User berdasarkan nim_nidn DAN password
         $user = User::where('nim_nidn', $nim)
@@ -26,27 +34,34 @@ class AuthController extends Controller
 
         // 3. Cek apakah user ditemukan
         if ($user) {
-            // Set Session Manual (Mirip $_SESSION native)
+            // Set Session Manual
             Session::put('user_id', $user->id);
             Session::put('nama', $user->nama_lengkap);
-            Session::put('role', $user->role);
+            Session::put('role', $user->role); // admin, dosen, atau mahasiswa
             Session::put('status', 'login');
-            Session::put('foto', $user->foto_profil); // Tambahan buat foto profil
+            Session::put('foto', $user->foto_profil);
 
-            // Redirect sesuai Role
-            if ($user->role == 'mahasiswa') {
-                return redirect('/dashboard');
-            } else {
-                return redirect('/dashboard'); // Atau arahkan ke dashboard dosen/admin
+            // 4. LOGIKA PENGALIHAN (REDIRECT) BERDASARKAN ROLE
+            if ($user->role == 'admin') {
+                return redirect('/admin/dashboard')->with('success', 'Selamat Datang Admin!');
+            } 
+            elseif ($user->role == 'dosen') {
+                // Pastikan route /dosen/dashboard nanti dibuat
+                return redirect('/dosen/dashboard')->with('success', 'Selamat Datang Dosen!');
+            } 
+            else {
+                // Default: Mahasiswa
+                return redirect('/dashboard')->with('success', 'Selamat Belajar!');
             }
+
         } else {
-            return redirect('/login')->with('error', 'NIM atau Password salah!');
+            return redirect('/login')->with('error', 'NIM/NIDN atau Password salah!');
         }
     }
 
     public function logout()
     {
         Session::flush(); // Hapus semua session
-        return redirect('/login');
+        return redirect('/login')->with('success', 'Anda berhasil logout.');
     }
 }

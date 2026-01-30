@@ -3,9 +3,15 @@
 @section('title', $materi->judul_materi)
 
 @section('content')
-    {{-- NAVIGASI KEMBALI --}}
+    {{-- NAVIGASI KEMBALI (FIXED: MENGGUNAKAN SESSION) --}}
     <div class="mb-3 animate-fade-in-up">
-        <a href="{{ url('/mata-kuliah/' . $materi->course->concentration_id) }}"
+        @php
+            // Ambil ID dari Session. Jika session expired/kosong, kembali ke halaman utama jalur belajar
+            $backLink = Session::has('active_concentration_id') 
+                        ? url('/mata-kuliah/' . Session::get('active_concentration_id')) 
+                        : url('/jalur-belajar');
+        @endphp
+        <a href="{{ $backLink }}"
            class="text-decoration-none text-gray-600 hover:text-blue-900 text-xs md:text-sm flex items-center gap-1">
             <i class="bi bi-arrow-left"></i> Kembali ke Kurikulum
         </a>
@@ -42,7 +48,7 @@
                 @if($materi->kategori == 'quiz')
 
                     @if($data_nilai && request('mode') != 'retake')
-                        {{-- Tampilan Skor --}}
+                        {{-- Tampilan Skor Jika Sudah Mengerjakan --}}
                         <div class="text-center py-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                             <i class="bi bi-trophy-fill text-4xl md:text-5xl text-yellow-500 mb-2 block"></i>
                             <h1 class="text-3xl md:text-4xl font-bold text-blue-900 mb-1">{{ $data_nilai->skor }}</h1>
@@ -69,6 +75,7 @@
                             <input type="hidden" name="material_id" value="{{ $materi->id }}">
                             <input type="hidden" name="course_id" value="{{ $course_id }}">
                             <input type="hidden" name="urutan" value="{{ $urutan }}">
+                            
                             @forelse($soal_kuis as $index => $soal)
                                 <div class="mb-3 p-3 border rounded-lg bg-gray-50 hover:bg-white transition">
                                     <p class="font-semibold text-sm md:text-base mb-2">{{ $index + 1 }}. {{ $soal->pertanyaan }}</p>
@@ -84,6 +91,7 @@
                             @empty
                                 <div class="alert alert-warning text-sm">Belum ada soal untuk kuis ini.</div>
                             @endforelse
+
                             @if(count($soal_kuis) > 0)
                                 <button type="submit" class="btn btn-primary w-100 py-2 font-bold text-sm md:text-base rounded-lg shadow-md hover:bg-blue-700 transition">
                                     Kirim Jawaban <i class="bi bi-send-fill ms-2"></i>
@@ -160,10 +168,8 @@
                                 .forum-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #e5e7eb; }
                                 .reply-wrapper { display: none; margin-top: 10px; }
                                 .reply-container { margin-left: 10px; border-left: 2px solid #e5e7eb; padding-left: 10px; }
-                                /* Tombol Link Custom untuk Lihat Balasan */
                                 .btn-link-custom { font-size: 0.75rem; color: #6b7280; cursor: pointer; text-decoration: none; font-weight: 600; background: none; border: none; padding: 0; }
                                 .btn-link-custom:hover { color: #1e1e4f; }
-
                                 .badge-role { font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; margin-left: 4px; text-transform: uppercase; font-weight: bold; }
                                 .badge-dosen { background: #1e1e4f; color: white; }
                                 .badge-mhs { background: #f3f4f6; color: #666; border: 1px solid #ddd; }
@@ -200,11 +206,9 @@
                                                     </div>
                                                     <p class="text-xs md:text-sm text-gray-700 mb-2">{{ $chat->message }}</p>
 
-                                                    {{-- TOMBOL AKSI (BALAS & LIHAT BALASAN) --}}
+                                                    {{-- TOMBOL AKSI --}}
                                                     <div class="d-flex align-items-center gap-3 text-xs action-buttons">
                                                         <span class="cursor-pointer text-blue-900 font-bold" onclick="toggleForm('{{ $chat->id }}')">Balas</span>
-
-                                                        {{-- Tombol Lihat Balasan (Server Side Check) --}}
                                                         @if($chat->replies->count() > 0)
                                                             <button type="button" class="btn-link-custom" id="btn-toggle-{{ $chat->id }}" onclick="toggleReplies(event, '{{ $chat->id }}')">
                                                                 <i class="bi bi-chevron-down"></i> Lihat {{ $chat->replies->count() }} Balasan
@@ -219,7 +223,6 @@
                                                                 <div class="bg-gray-50 p-2 rounded mb-2 border" id="reply-{{ $reply->id }}">
                                                                     <div class="d-flex gap-2">
                                                                         <img src="{{ asset('images/' . ($reply->user->foto_profil ?? 'default.png')) }}" class="forum-avatar" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($reply->user->nama_lengkap) }}'">
-
                                                                         <div class="flex-grow-1">
                                                                             <div class="d-flex align-items-center mb-1">
                                                                                 <strong class="text-xs">{{ $reply->user->nama_lengkap }}</strong>
@@ -258,7 +261,7 @@
                         </div>
                     </div>
 
-                    {{-- Tombol Selesai --}}
+                    {{-- TOMBOL LANJUT MATERI (HANYA MUNCUL DI MODE VIDEO) --}}
                     <div class="mt-4 text-end">
                         <form action="{{ url('/proses-progress') }}" method="POST">
                             @csrf <input type="hidden" name="material_id" value="{{ $materi->id }}"> <input type="hidden" name="course_id" value="{{ $course_id }}"> <input type="hidden" name="urutan" value="{{ $urutan }}">
@@ -370,7 +373,7 @@
                             const fotoSrc = d.foto ? imgBaseUrl + d.foto : `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nama)}`;
 
                             if (parentId == 0) {
-                                // Logic Tambah Komentar Utama (Parent)
+                                // Logic Tambah Komentar Utama
                                 const html = `
                                     <div class="forum-card animate-fade-in-up" id="chat-${d.id}">
                                         <div class="d-flex gap-2">
@@ -402,7 +405,7 @@
                                     </div>`;
                                 document.getElementById('forumList').insertAdjacentHTML('afterbegin', html);
                             } else {
-                                // Logic Tambah Balasan (Reply)
+                                // Logic Tambah Balasan
                                 const html = `
                                     <div class="bg-gray-50 p-2 rounded mb-2 border" id="reply-${d.id}">
                                         <div class="d-flex gap-2">
@@ -418,15 +421,12 @@
                                         </div>
                                     </div>`;
 
-                                // 1. Tambahkan HTML balasan
                                 document.getElementById('replies-' + parentId).insertAdjacentHTML('beforeend', html);
                                 document.getElementById('replyForm-' + parentId).style.display = 'none';
-
-                                // 2. Tampilkan Wrapper Balasan (Paksa Buka)
+                                
                                 const wrapper = document.getElementById('wrapper-' + parentId);
                                 wrapper.style.display = 'block';
 
-                                // 3. Cek apakah tombol "Lihat Balasan" sudah ada? Jika belum, BUAT BARU.
                                 const parentChat = document.getElementById('chat-' + parentId);
                                 const actionDiv = parentChat.querySelector('.action-buttons');
                                 let toggleBtn = document.getElementById('btn-toggle-' + parentId);
@@ -435,7 +435,6 @@
                                     const newBtn = `<button type="button" class="btn-link-custom ms-2" id="btn-toggle-${parentId}" onclick="toggleReplies(event, '${parentId}')"><i class="bi bi-chevron-up"></i> Sembunyikan</button>`;
                                     actionDiv.insertAdjacentHTML('beforeend', newBtn);
                                 } else {
-                                    // Jika tombol sudah ada, ubah teks jadi "Sembunyikan" karena kita buka wrappernya
                                     toggleBtn.innerHTML = '<i class="bi bi-chevron-up"></i> Sembunyikan';
                                 }
                             }

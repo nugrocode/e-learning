@@ -12,6 +12,19 @@ class Material extends Model
     // Matikan timestamps (karena tabelmu tidak punya kolom created_at/updated_at default)
     public $timestamps = false;
 
+    // --- BAGIAN PENTING (UPDATE) ---
+    // Daftar kolom yang diizinkan untuk diisi/diupdate secara massal
+    protected $fillable = [
+        'course_id',
+        'judul_materi',
+        'deskripsi_materi',
+        'video_url',
+        'file_lampiran',
+        'kategori',        // quiz atau video
+        'tipe_submission', // github atau file
+        'urutan'           // <--- WAJIB ADA: Agar Controller bisa mengubah urutan
+    ];
+
     // Relasi: Materi ini milik satu Course (Mata Kuliah)
     public function course()
     {
@@ -19,7 +32,6 @@ class Material extends Model
     }
 
     // Relasi: Materi ini memiliki banyak data Progress (dari berbagai user)
-    // Relasi ini WAJIB ADA agar fungsi "Kelas Saya" di Controller bisa berjalan
     public function progress()
     {
         return $this->hasMany(Progress::class, 'material_id');

@@ -45,19 +45,29 @@
             <div class="list-group list-group-flush mt-4">
                 <p class="px-4 text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Menu Utama</p>
 
-                <a href="{{ url('/dashboard') }}" class="list-group-item list-group-item-action {{ Request::is('dashboard') ? 'active' : '' }}">
+                {{-- UPDATE: Menghapus 'list-group-item-action' dan mengganti 'active' dengan style text --}}
+                
+                <a href="{{ url('/dashboard') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('dashboard') ? 'text-white font-bold' : 'text-gray-400 hover:text-white' }}">
                     <i class="bi bi-house-door-fill text-lg"></i> Beranda
                 </a>
 
-                <a href="{{ url('/jalur-belajar') }}" class="list-group-item list-group-item-action {{ Request::is('jalur-belajar*') ? 'active' : '' }}">
+                <a href="{{ url('/jalur-belajar') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('jalur-belajar*') ? 'text-white font-bold' : 'text-gray-400 hover:text-white' }}">
                     <i class="bi bi-diagram-3-fill text-lg"></i> Jalur Belajar
                 </a>
 
-                <a href="{{ url('/kelas-saya') }}" class="list-group-item list-group-item-action {{ Request::is('kelas-saya*') ? 'active' : '' }}">
+                <a href="{{ url('/kelas-saya') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('kelas-saya*') ? 'text-white font-bold' : 'text-gray-400 hover:text-white' }}">
                     <i class="bi bi-book-half text-lg"></i> Kelas Saya
                 </a>
 
-                <a href="{{ url('/diskusi') }}" class="list-group-item list-group-item-action {{ Request::is('diskusi*') ? 'active' : '' }}">
+                <a href="{{ url('/diskusi') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('diskusi*') ? 'text-white font-bold' : 'text-gray-400 hover:text-white' }}">
                     <i class="bi bi-chat-left-text-fill text-lg"></i> Diskusi Dengan AI
                 </a>
             </div>
@@ -91,6 +101,7 @@
                         {{-- 1. NOTIFIKASI --}}
                         @php
                             $userId = session('user_id');
+                            // Pastikan model Notification ada, jika belum ada fitur notif, bagian ini bisa dikomentari
                             $myNotifs = \App\Models\Notification::with('sender', 'material')
                                         ->where('user_id', $userId)
                                         ->orderBy('created_at', 'desc')
@@ -158,7 +169,7 @@
     </div>
 
     {{-- ========================================= --}}
-    {{-- SCRIPT TOGGLE SIDEBAR (OVERLAY LOGIC)     --}}
+    {{-- SCRIPT TOGGLE SIDEBAR                     --}}
     {{-- ========================================= --}}
     <script>
         var el = document.getElementById("wrapper");

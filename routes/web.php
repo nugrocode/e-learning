@@ -5,7 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LearningController;
 
 // ==========================================================
-// 1. OTENTIKASI (Login/Logout)
+// 1. OTENTIKASI (PUBLIC)
 // ==========================================================
 Route::get('/', [AuthController::class, 'index']);
 Route::get('/login', [AuthController::class, 'index'])->name('login');
@@ -14,71 +14,97 @@ Route::get('/logout', [AuthController::class, 'logout']);
 
 
 // ==========================================================
-// 2. DASHBOARD (FIXED)
+// 2. GROUP ADMIN (Akses: Role Admin)
 // ==========================================================
-// Menggunakan Controller agar data $announcements terkirim ke view
-Route::get('/dashboard', [LearningController::class, 'dashboard']);
+Route::middleware(['cek_role:admin'])->group(function () {
+    
+    // Dashboard Admin
+    Route::get('/admin/dashboard', [LearningController::class, 'adminDashboard']);
 
+    // --- MANAJEMEN PENGGUNA (USERS) --- [BARU]
+    Route::get('/admin/users', [LearningController::class, 'adminUsersIndex']);
+    Route::post('/admin/users', [LearningController::class, 'adminUserStore']);
+    Route::put('/admin/users/{id}', [LearningController::class, 'adminUserUpdate']);
+    Route::delete('/admin/users/{id}', [LearningController::class, 'adminUserDestroy']);
 
-// ==========================================================
-// 3. FITUR PEMBELAJARAN
-// ==========================================================
+    // --- MANAJEMEN PENGUMUMAN ---
+    Route::get('/admin/pengumuman', [LearningController::class, 'adminPengumumanIndex']);
+    Route::post('/admin/pengumuman', [LearningController::class, 'adminPengumumanStore']);
+    Route::put('/admin/pengumuman/{id}', [LearningController::class, 'adminPengumumanUpdate']);
+    Route::delete('/admin/pengumuman/{id}', [LearningController::class, 'adminPengumumanDestroy']);
 
-// Halaman Daftar Jalur Belajar (Pilih Konsentrasi)
-Route::get('/jalur-belajar', [LearningController::class, 'index']);
+    // --- MASTER DATA: KONSENTRASI (PRODI) ---
+    Route::get('/admin/konsentrasi', [LearningController::class, 'adminKonsentrasiIndex']);
+    Route::post('/admin/konsentrasi', [LearningController::class, 'adminKonsentrasiStore']);
+    Route::put('/admin/konsentrasi/{id}', [LearningController::class, 'adminKonsentrasiUpdate']);
+    Route::delete('/admin/konsentrasi/{id}', [LearningController::class, 'adminKonsentrasiDestroy']);
 
-// Halaman Daftar Mata Kuliah (berdasarkan ID Konsentrasi)
-Route::get('/mata-kuliah/{id}', [LearningController::class, 'showCourses']);
+    // --- MASTER DATA: BANK MATA KULIAH ---
+    Route::get('/admin/bank-mata-kuliah', [LearningController::class, 'adminBankIndex']);
+    Route::post('/admin/bank-mata-kuliah', [LearningController::class, 'adminBankStore']);
+    Route::put('/admin/bank-mata-kuliah/{id}', [LearningController::class, 'adminBankUpdate']);
+    Route::delete('/admin/bank-mata-kuliah/{id}', [LearningController::class, 'adminBankDestroy']);
 
-// Halaman Materi Belajar (Video/Kuis)
-// Parameter {urutan?} bersifat opsional (default urutan 1)
-Route::get('/belajar/{course_id}/{urutan?}', [LearningController::class, 'belajar']);
+    // --- MANAJEMEN KURIKULUM (DISTRIBUSI MK) ---
+    
+    // 1. Pilih Konsentrasi
+    Route::get('/admin/mata-kuliah', [LearningController::class, 'adminKurikulumIndex']);
+    
+    // 2. Detail & CRUD MK (Per Konsentrasi - Pivot Management)
+    Route::get('/admin/mata-kuliah/{id}', [LearningController::class, 'adminKurikulumShow']);
+    Route::post('/admin/mata-kuliah', [LearningController::class, 'adminCourseStore']);
+    Route::put('/admin/mata-kuliah/{id}', [LearningController::class, 'adminCourseUpdate']);
+    Route::delete('/admin/mata-kuliah/{id}', [LearningController::class, 'adminCourseDestroy']);
 
+    // 3. FITUR AI (KURIKULUM INTELLIGENCE)
+    // Reset Total: Urutkan ulang kurikulum di satu prodi
+    Route::post('/admin/kurikulum/reset/{concentration_id}', [LearningController::class, 'adminResetKurikulum']);
+    
+    // Smart Update: Sisipkan MK baru ke posisi yang logis (Per Prodi)
+    Route::post('/admin/kurikulum/update/{concentration_id}', [LearningController::class, 'adminUpdateKurikulum']);
+    
+    // Smart Distribute: Distribusikan MK ke semua prodi yang relevan (Global Batch)
+    Route::post('/admin/kurikulum/auto-distribute', [LearningController::class, 'adminAutoDistribute']);
 
-// ==========================================================
-// 4. PROSES LOGIKA (POST)
-// ==========================================================
-
-// Simpan Progress (Saat tombol "Lanjut" diklik)
-Route::post('/proses-progress', [LearningController::class, 'storeProgress']);
-
-// Simpan Nilai Kuis
-Route::post('/proses-kuis', [LearningController::class, 'storeQuiz']);
-
-// Simpan Tugas GitHub
-Route::post('/proses-tugas', [LearningController::class, 'storeAssignment']);
-
-// Route Kelas Saya
-Route::get('/kelas-saya', [LearningController::class, 'myClasses']);
-
-// Route Bantuan
-Route::get('/bantuan', [LearningController::class, 'bantuan']);
-
-
-// ==========================================================
-// 5. FITUR AI & DISKUSI
-// ==========================================================
-
-// 1. Route untuk membuka halaman chatting
-Route::get('/diskusi', [LearningController::class, 'diskusi']);
-
-// 2. Route API untuk memproses pertanyaan ke Gemini (AJAX)
-Route::post('/ask-ai', [LearningController::class, 'askAi']);
-
-// Route Auto-Sort Kurikulum by AI
-Route::post('/auto-sort-kurikulum/{id}', [LearningController::class, 'autoSortKurikulum']);
-
-// Simpan Diskusi / Komentar Materi
-Route::post('/proses-diskusi', [LearningController::class, 'storeDiscussion']);
-// Hapus Diskusi
-Route::delete('/diskusi/{id}', [LearningController::class, 'destroyDiscussion']);
+});
 
 
 // ==========================================================
-// 6. FITUR PROFIL & NOTIFIKASI
+// 3. GROUP DOSEN
 // ==========================================================
-Route::get('/profil', [LearningController::class, 'editProfile']);
-Route::post('/profil/update', [LearningController::class, 'updateProfile']);
+Route::middleware(['cek_role:dosen'])->group(function () {
+    Route::get('/dosen/dashboard', function() { return "Halo Dosen! (Dashboard sedang disiapkan)"; });
+    
+    // AI Materi (Penyusunan Bab Otomatis)
+    Route::post('/dosen/materi/reset/{course_id}', [LearningController::class, 'dosenResetMateri']);
+    Route::post('/dosen/materi/update/{course_id}', [LearningController::class, 'dosenUpdateMateri']);
+});
 
-// Baca Notifikasi
-Route::get('/notifikasi/{id}', [LearningController::class, 'readNotification']);
+
+// ==========================================================
+// 4. GROUP MAHASISWA
+// ==========================================================
+Route::middleware(['cek_role:mahasiswa'])->group(function () {
+    // Dashboard & Akademik
+    Route::get('/dashboard', [LearningController::class, 'dashboard']);
+    Route::get('/jalur-belajar', [LearningController::class, 'index']);
+    Route::get('/mata-kuliah/{id}', [LearningController::class, 'showCourses']);
+    Route::get('/kelas-saya', [LearningController::class, 'myClasses']);
+    
+    // Proses Belajar (Materi, Kuis, Tugas)
+    Route::get('/belajar/{course_id}/{urutan?}', [LearningController::class, 'belajar']);
+    Route::post('/proses-progress', [LearningController::class, 'storeProgress']);
+    Route::post('/proses-kuis', [LearningController::class, 'storeQuiz']);
+    Route::post('/proses-tugas', [LearningController::class, 'storeAssignment']);
+    
+    // Fitur Tambahan (Diskusi AI, Profil, Notifikasi)
+    Route::get('/bantuan', [LearningController::class, 'bantuan']);
+    Route::get('/diskusi', [LearningController::class, 'diskusi']);
+    Route::post('/ask-ai', [LearningController::class, 'askAi']);
+    Route::post('/proses-diskusi', [LearningController::class, 'storeDiscussion']);
+    Route::delete('/diskusi/{id}', [LearningController::class, 'destroyDiscussion']);
+    
+    Route::get('/profil', [LearningController::class, 'editProfile']);
+    Route::post('/profil/update', [LearningController::class, 'updateProfile']);
+    Route::get('/notifikasi/{id}', [LearningController::class, 'readNotification']);
+});
