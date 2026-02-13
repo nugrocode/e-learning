@@ -1,255 +1,166 @@
 @extends('layouts.app')
 
-@section('title', 'Diskusi AI Assistant')
+@section('title', 'Asisten Virtual AI')
 
 @push('styles')
-    <style>
-        /* --- AREA CHAT (Responsif Height Diperbaiki) --- */
-        .chat-container {
-            /* [PERBAIKAN] Tinggi dikurangi agar input box terlihat tanpa scroll halaman */
-            height: 60vh;
-            overflow-y: auto;
-            padding: 20px;
-            background-color: #f8fafc;
-            border-radius: 12px 12px 0 0;
-            border: 1px solid #e2e8f0;
-            scroll-behavior: smooth;
-        }
-
-        /* --- BUBBLE CHAT --- */
-        .message {
-            display: flex;
-            margin-bottom: 20px;
-            align-items: flex-start;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .message-content {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            position: relative;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            word-wrap: break-word;
-        }
-
-        /* User Style */
-        .message.user { flex-direction: row-reverse; }
-        .message.user .message-content {
-            background-color: #1e1e4f;
-            color: white;
-            border-top-right-radius: 0;
-        }
-        .message.user .avatar { margin-left: 10px; }
-
-        /* AI Style */
-        .message.ai { flex-direction: row; }
-        .message.ai .message-content {
-            background-color: white;
-            color: #334155;
-            border: 1px solid #e2e8f0;
-            border-top-left-radius: 0;
-        }
-        .message.ai .avatar { margin-right: 10px; }
-
-        /* Avatar Container */
-        .avatar {
-            width: 35px; height: 35px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; flex-shrink: 0;
-            overflow: hidden; /* Agar gambar tidak keluar lingkaran */
-        }
-        .avatar-ai { background: #10b981; color: white; }
-        .avatar-user { background: #cbd5e1; color: #475569; }
-
-        /* [PERBAIKAN] Style untuk gambar profil user */
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* MARKDOWN & ANIMASI (Tetap sama) */
-        .markdown-body pre { background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 6px; overflow-x: auto; font-size: 0.85em; margin: 10px 0; }
-        .markdown-body p { margin-bottom: 0.5rem; }
-        .typing-indicator span { display: inline-block; width: 5px; height: 5px; background-color: #94a3b8; border-radius: 50%; animation: typing 1.4s infinite both; margin: 0 1px; }
-        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typing { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* --- RESPONSIVE MOBILE FIX --- */
-        @media (max-width: 768px) {
-            .chat-container {
-                /* [PERBAIKAN] Tinggi di HP dikurangi lagi agar keyboard aman */
-                height: 50vh;
-                padding: 15px;
-            }
-            .message-content { max-width: 90%; font-size: 0.85rem; padding: 10px 14px; }
-            .avatar { width: 30px; height: 30px; font-size: 0.8rem; }
-        }
-    </style>
+<style>
+    /* Sembunyikan Scrollbar tapi tetap bisa scroll */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 @endpush
 
 @section('content')
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-10">
+<div class="row animate-fade-in-up">
+    <div class="col-12">
 
-            {{-- Header Chat --}}
-            <div class="d-flex align-items-center gap-3 mb-3 pt-2">
-                <div class="bg-green-100 p-2 md:p-3 rounded-full text-green-700">
-                    <i class="bi bi-robot text-xl md:text-2xl"></i>
-                </div>
-                <div>
-                    <h2 class="font-bold text-xl md:text-2xl text-gray-800 m-0">AI Assistant</h2>
-                    <p class="text-gray-500 text-xs md:text-sm m-0">Tanyakan apa saja seputar perkuliahan atau kodingan.</p>
-                </div>
-            </div>
+        {{-- HEADER LAMA SUDAH DIHAPUS --}}
 
-            {{-- Chat Box --}}
-            <div class="chat-container custom-scrollbar" id="chatBox">
-                <div class="message ai">
-                    <div class="avatar avatar-ai"><i class="bi bi-stars"></i></div>
-                    <div class="message-content">
+        {{-- AREA CHAT --}}
+        {{-- Saya naikkan tingginya jadi 80vh biar lebih puas karena header sudah hilang --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden d-flex flex-column" style="height: 80vh;">
+            
+            {{-- LIST PESAN --}}
+            <div id="chatContainer" class="flex-grow-1 p-4 overflow-y-auto no-scrollbar bg-gray-50">
+                
+                {{-- PESAN SAMBUTAN AI --}}
+                <div class="d-flex gap-3 mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+                            <i class="bi bi-stars text-lg"></i>
+                        </div>
+                    </div>
+                    {{-- Bubble Chat AI --}}
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 text-sm text-gray-700" style="max-width: 85%;">
+                        <p class="mb-1 font-bold text-blue-600 text-xs">AI Assistant</p>
                         Halo, {{ session('nama') }}! 👋 <br>
                         Saya asisten virtual pintar. Ada yang bisa saya bantu hari ini?
                     </div>
                 </div>
+
             </div>
 
-            {{-- Input Area --}}
-            <div class="input-area bg-white p-3 border border-t-0 rounded-b-xl shadow-sm">
-                <form id="chatForm" class="d-flex gap-2">
+            {{-- INPUT AREA --}}
+            <div class="p-3 bg-white border-top">
+                <form id="formChat" class="d-flex gap-2">
                     @csrf
-                    <input type="text" id="userVal"
-                        class="form-control py-2 md:py-3 px-4 rounded-pill bg-gray-50 border-gray-200 text-sm md:text-base"
-                        placeholder="Ketik pertanyaan..." autocomplete="off">
-
-                    <button type="submit"
-                        class="btn btn-dark rounded-circle w-10 h-10 md:w-12 md:h-12 flex items-center justify-center shadow-md hover:bg-gray-800 transition flex-shrink-0">
-                        <i class="bi bi-send-fill text-sm md:text-base"></i>
+                    <input type="text" id="inputPesan" class="form-control rounded-pill border-gray-300 px-4 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ketik pertanyaan..." autocomplete="off" required>
+                    <button type="submit" class="btn btn-dark rounded-circle w-10 h-10 flex items-center justify-center shadow-md transition transform hover:scale-105">
+                        <i class="bi bi-send-fill text-sm"></i>
                     </button>
                 </form>
             </div>
-
         </div>
+
     </div>
+</div>
 @endsection
 
 @push('scripts')
-    {{-- Library Marked untuk format teks AI --}}
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    const chatContainer = document.getElementById('chatContainer');
+    const formChat = document.getElementById('formChat');
+    const inputPesan = document.getElementById('inputPesan');
 
-    <script>
-        const chatBox = document.getElementById('chatBox');
-        const chatForm = document.getElementById('chatForm');
-        const userInput = document.getElementById('userVal');
+    // URL Foto Profil User
+    const userPhoto = "{{ session('foto') && session('foto') != 'default.png' ? asset('storage/profiles/' . session('foto')) : asset('images/logo_ukit.png') }}";
 
-        // [PERBAIKAN] Ambil Foto User dari Session PHP ke JavaScript
-        const userPhotoUrl = "{{ session('foto') && session('foto') != 'default.png' ? asset('images/'.session('foto')) : '' }}";
+    function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-        // Fungsi Scroll ke Bawah
-        function scrollToBottom() {
-            chatBox.scrollTop = chatBox.scrollHeight;
+    formChat.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const pesan = inputPesan.value.trim();
+        if(!pesan) return;
+
+        // 1. Tampilkan Pesan User
+        appendUserMessage(pesan);
+        inputPesan.value = '';
+        scrollToBottom();
+
+        // 2. Tampilkan Loading
+        const loadingId = appendLoadingAI();
+        scrollToBottom();
+
+        try {
+            // 3. Request ke Server
+            const response = await fetch("{{ url('/ask-ai') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ message: pesan })
+            });
+            const data = await response.json();
+
+            // 4. Ganti Loading dengan Jawaban
+            document.getElementById(loadingId).remove();
+            appendAIMessage(data.reply);
+        } catch (error) {
+            document.getElementById(loadingId).remove();
+            appendAIMessage("Maaf, terjadi kesalahan koneksi.");
         }
+        scrollToBottom();
+    });
 
-        // Jalankan scroll saat halaman dimuat
-        window.onload = scrollToBottom;
-
-        // Tambah Pesan ke Chat
-        function appendMessage(role, text) {
-            const isUser = role === 'user';
-            const alignClass = isUser ? 'user' : 'ai';
-            const avatarClass = isUser ? 'avatar-user' : 'avatar-ai';
-
-            // [PERBAIKAN] Logika Icon / Foto Profil
-            let icon;
-            if (isUser) {
-                // Jika user punya foto, pakai fotonya
-                if (userPhotoUrl) {
-                    icon = `<img src="${userPhotoUrl}" alt="User">`;
-                } else {
-                    // Jika tidak, pakai icon default
-                    icon = '<i class="bi bi-person-fill"></i>';
-                }
-            } else {
-                // Icon untuk AI
-                icon = '<i class="bi bi-stars"></i>';
-            }
-
-            // Format teks (User: teks biasa, AI: Markdown)
-            let contentHtml = isUser ? text : marked.parse(text);
-
-            const html = `
-            <div class="message ${alignClass}">
-                <div class="avatar ${avatarClass}">${icon}</div>
-                <div class="message-content markdown-body">${contentHtml}</div>
-            </div>`;
-
-            chatBox.insertAdjacentHTML('beforeend', html);
-            scrollToBottom();
-        }
-
-        // Efek Loading (Ngetik...)
-        function showTyping() {
-            const html = `
-            <div class="message ai" id="typingLoader">
-                <div class="avatar avatar-ai"><i class="bi bi-stars"></i></div>
-                <div class="message-content typing-indicator">
-                    <span></span><span></span><span></span>
+    // RENDER PESAN USER
+    function appendUserMessage(text) {
+        const html = `
+            <div class="d-flex gap-3 mb-4 flex-row-reverse animate-fade-in-up">
+                <div class="flex-shrink-0">
+                    <img src="${userPhoto}" 
+                         class="rounded-full border-2 border-white shadow-sm bg-white"
+                         style="width: 40px; height: 40px; object-fit: cover;"
+                         onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
                 </div>
-            </div>`;
-            chatBox.insertAdjacentHTML('beforeend', html);
-            scrollToBottom();
-        }
+                <div class="bg-gray-800 text-white p-3 rounded-2xl rounded-tr-none shadow-md text-sm" style="max-width: 85%;">
+                    <p class="mb-1 font-bold text-gray-300 text-xs text-end">Anda</p>
+                    ${text}
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', html);
+    }
 
-        function removeTyping() {
-            const loader = document.getElementById('typingLoader');
-            if (loader) loader.remove();
-        }
+    // RENDER PESAN AI
+    function appendAIMessage(text) {
+        const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+        
+        const html = `
+            <div class="d-flex gap-3 mb-4 animate-fade-in-up">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+                        <i class="bi bi-stars text-lg"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 text-sm text-gray-700" style="max-width: 85%;">
+                    <p class="mb-1 font-bold text-blue-600 text-xs">AI Assistant</p>
+                    ${formattedText}
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', html);
+    }
 
-        // Kirim Pesan
-        chatForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const message = userInput.value.trim();
-            if (!message) return;
-
-            // 1. Tampilkan User Msg
-            appendMessage('user', message);
-            userInput.value = '';
-
-            // 2. Loading...
-            showTyping();
-
-            try {
-                // 3. Request ke Server
-                const response = await fetch("{{ url('/ask-ai') }}", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify({ message: message })
-                });
-
-                const data = await response.json();
-
-                // 4. Tampilkan Balasan
-                removeTyping();
-                if (data.reply) {
-                    appendMessage('ai', data.reply);
-                } else {
-                    appendMessage('ai', "Maaf, tidak ada respon.");
-                }
-
-            } catch (error) {
-                removeTyping();
-                appendMessage('ai', "Maaf, terjadi kesalahan koneksi. Pastikan API Key benar.");
-            }
-        });
-    </script>
+    // RENDER LOADING
+    function appendLoadingAI() {
+        const id = 'loading-' + Date.now();
+        const html = `
+            <div id="${id}" class="d-flex gap-3 mb-4 animate-pulse">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <i class="bi bi-three-dots text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="bg-gray-100 p-3 rounded-2xl rounded-tl-none text-xs text-gray-500 italic">
+                    Sedang mengetik...
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', html);
+        return id;
+    }
+</script>
 @endpush

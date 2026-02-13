@@ -3,43 +3,32 @@
 @section('title', 'Master Data Prodi')
 
 @section('content')
-    {{-- HEADER: Responsif --}}
+    {{-- HEADER HALAMAN --}}
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
             <h2 class="font-bold text-2xl text-gray-800">Program Studi / Konsentrasi</h2>
             <p class="text-gray-500 text-sm">Kelola data induk jurusan atau jalur belajar di sini.</p>
         </div>
         
-        {{-- PERBAIKAN TOMBOL: w-full (HP) dan md:w-auto (Desktop) --}}
         <button class="btn btn-primary bg-blue-900 border-0 rounded-lg font-bold shadow-sm hover:bg-blue-800 transition w-full md:w-auto py-2 px-4 text-sm" 
             data-bs-toggle="modal" data-bs-target="#modalTambah">
             <i class="bi bi-plus-lg me-2"></i> Tambah Prodi
         </button>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success border-0 shadow-sm mb-4 rounded-lg d-flex align-items-center gap-2">
-            <i class="bi bi-check-circle-fill text-xl"></i> {{ session('success') }}
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-lg d-flex align-items-center gap-2">
-            <i class="bi bi-exclamation-triangle-fill text-xl"></i> {{ session('error') }}
-        </div>
-    @endif
-
     {{-- GRID KONSENTRASI --}}
     <div class="row g-4">
         @forelse($konsentrasi as $item)
             <div class="col-12 col-md-6 col-lg-4">
-                {{-- CARD: Hapus efek hover shadow/transform agar diam --}}
+                {{-- CARD UTAMA --}}
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-100 d-flex flex-column">
                     
-                    {{-- Gambar Thumbnail (Zoom Tetap Ada) --}}
+                    {{-- GAMBAR THUMBNAIL (FIX PATH STORAGE) --}}
                     <div class="relative h-48 bg-gray-100 overflow-hidden group">
                         @if($item->gambar)
-                            {{-- Gambar Zoom saat hover --}}
-                            <img src="{{ asset('images/' . $item->gambar) }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <img src="{{ asset('storage/thumbnails/' . $item->gambar) }}" 
+                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                 onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
                         @else
                             <div class="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
                                 <i class="bi bi-image text-5xl opacity-50"></i>
@@ -55,20 +44,20 @@
                         </div>
                     </div>
 
-                    {{-- Konten --}}
+                    {{-- KONTEN CARD --}}
                     <div class="p-4 flex-grow-1 d-flex flex-column">
                         <h5 class="font-bold text-lg text-gray-800 mb-2">{{ $item->nama_konsentrasi }}</h5>
                         <p class="text-sm text-gray-500 line-clamp-3 mb-4 flex-grow-1 leading-relaxed">
                             {{ $item->deskripsi ?? 'Belum ada deskripsi untuk program studi ini.' }}
                         </p>
 
-                        {{-- Tombol Aksi --}}
+                        {{-- TOMBOL AKSI (SIMETRIS & RAPI) --}}
                         <div class="d-flex gap-2 pt-3 border-t mt-auto">
                             <button class="btn btn-sm btn-light text-blue-600 border border-blue-100 flex-grow-1 font-bold rounded-lg hover:bg-blue-50 transition" 
                                 data-bs-toggle="modal" data-bs-target="#modalEdit{{ $item->id }}">
                                 <i class="bi bi-pencil-square me-1"></i> Edit
                             </button>
-                            <form action="{{ url('/admin/konsentrasi/'.$item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus prodi ini? \n\nPERINGATAN: Pastikan tidak ada Mata Kuliah di dalamnya agar tidak error.')">
+                            <form action="{{ url('/admin/konsentrasi/'.$item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus prodi ini?')">
                                 @csrf @method('DELETE')
                                 <button class="btn btn-sm btn-light text-red-600 border border-red-100 font-bold rounded-lg px-3 hover:bg-red-50 transition" title="Hapus">
                                     <i class="bi bi-trash"></i>
@@ -79,8 +68,8 @@
                 </div>
             </div>
 
-            {{-- MODAL EDIT (Looping) --}}
-            <div class="modal fade" id="modalEdit{{ $item->id }}" tabindex="-1" aria-hidden="true">
+            {{-- MODAL EDIT --}}
+            <div class="modal fade" id="modalEdit{{ $item->id }}" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content rounded-xl border-0 shadow-lg">
                         <div class="modal-header border-bottom-0 pb-0">
@@ -101,12 +90,10 @@
                                 <div class="mb-3">
                                     <label class="form-label text-xs font-bold text-gray-500 uppercase">Ganti Thumbnail (Opsional)</label>
                                     <input type="file" name="gambar" class="form-control" accept="image/*">
-                                    <div class="form-text text-xs text-gray-400">Biarkan kosong jika tidak ingin mengubah gambar.</div>
                                 </div>
                             </div>
                             <div class="modal-footer border-top-0 pt-0">
-                                <button type="button" class="btn btn-light text-sm font-bold" data-bs-dismiss="modal">Batal</button>
-                                <button type="submit" class="btn btn-primary bg-blue-900 border-0 text-sm font-bold">Simpan Perubahan</button>
+                                <button type="submit" class="btn btn-primary bg-blue-900 border-0 w-100 font-bold py-2 rounded-lg">Simpan Perubahan</button>
                             </div>
                         </form>
                     </div>
@@ -115,17 +102,14 @@
 
         @empty
             <div class="col-12 text-center py-5">
-                <div class="d-inline-block p-5 rounded-full bg-gray-50 mb-4 border border-dashed border-gray-200">
-                    <i class="bi bi-diagram-3 text-5xl text-gray-300"></i>
-                </div>
-                <h5 class="font-bold text-gray-600">Belum ada Program Studi</h5>
-                <p class="text-gray-400 text-sm">Silakan tambahkan data prodi / konsentrasi baru.</p>
+                <i class="bi bi-diagram-3 text-5xl text-gray-200 d-block mb-3"></i>
+                <h5 class="font-bold text-gray-400">Belum ada Program Studi</h5>
             </div>
         @endforelse
     </div>
 
     {{-- MODAL TAMBAH --}}
-    <div class="modal fade" id="modalTambah" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalTambah" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-xl border-0 shadow-lg">
                 <div class="modal-header border-bottom-0 pb-0">
@@ -146,12 +130,10 @@
                         <div class="mb-3">
                             <label class="form-label text-xs font-bold text-gray-500 uppercase">Upload Thumbnail</label>
                             <input type="file" name="gambar" class="form-control" accept="image/*">
-                            <div class="form-text text-xs text-gray-400">Format: JPG/PNG. Max 2MB.</div>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0 pt-0">
-                        <button type="button" class="btn btn-light text-sm font-bold" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary bg-blue-900 border-0 text-sm font-bold">Simpan</button>
+                        <button type="submit" class="btn btn-primary bg-blue-900 border-0 w-100 font-bold py-2 rounded-lg">Simpan Data</button>
                     </div>
                 </form>
             </div>

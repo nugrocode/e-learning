@@ -3,153 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Panel Dosen') - E-Learning UKI Toraja</title>
+    <title>@yield('title', 'Dosen Panel') - E-Learning UKI Toraja</title>
 
-    {{-- 1. CDN LIBRARIES (Sama dengan User/Admin) --}}
+    {{-- CDN Libraries --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    {{-- 2. CUSTOM CSS (Menggunakan style.css yang sama agar konsisten) --}}
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
-
     <style>
-        /* CSS Tambahan Khusus Layout ini (No Scrollbar & Fix Height) */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 1. CSS PENGHILANG VISUAL SCROLLBAR (TETAP BISA SCROLL) */
+        .no-scrollbar::-webkit-scrollbar { display: none !important; }
+        .no-scrollbar { 
+            -ms-overflow-style: none !important; 
+            scrollbar-width: none !important; 
+        }
 
-        /* Paksa Tinggi Navbar & Header Sidebar sama (70px) agar lurus */
-        #sidebar-wrapper .sidebar-heading, .top-navbar {
+        /* 2. LAYOUT DASAR */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f7fafc;
+            overflow: hidden; /* Mencegah double scrollbar pada browser */
+            height: 100vh;
+        }
+
+        /* 3. SIMETRI HEADER (70px) */
+        #sidebar-wrapper .sidebar-heading, 
+        .top-navbar {
             height: 70px !important; 
             min-height: 70px !important; 
             max-height: 70px !important;
-            display: flex; align-items: center;
+            display: flex; 
+            align-items: center;
         }
 
-        #sidebar-wrapper { background-color: #2d3748; } /* Warna Dark Grey */
-        #sidebar-wrapper .list-group-item { border-left: 3px solid transparent; color: #cbd5e0; }
-        
-        /* State Aktif Menu (Kuning Emas) */
+        /* 4. SIDEBAR DOSEN (DARK MODERN) */
+        #sidebar-wrapper { 
+            background-color: #2d3748; 
+            width: 280px;
+            transition: margin 0.25s ease-out;
+            flex-shrink: 0;
+            z-index: 1000;
+        }
+        #sidebar-wrapper .list-group-item {
+            border-left: 3px solid transparent; 
+            color: #cbd5e0;
+            background-color: transparent;
+            border-bottom: none;
+        }
         #sidebar-wrapper .list-group-item.active-menu {
-            background: rgba(255, 255, 255, 0.05); 
+            background: rgba(255, 255, 255, 0.05);
             border-left-color: #FACC15; 
             color: #fff !important; 
             font-weight: 600;
         }
-        #sidebar-wrapper .list-group-item:hover { background-color: #4a5568; color: #fff; }
+        #sidebar-wrapper .list-group-item:hover { 
+            background-color: #4a5568; 
+            color: #fff; 
+        }
+
+        /* 5. NAVBAR KUNING */
+        .top-navbar { background-color: #ffc107 !important; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        
+        #page-content-wrapper { 
+            flex-grow: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-divider { 
+            font-size: 10px; 
+            color: #718096; 
+            padding: 20px 20px 5px; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px; 
+        }
+
+        /* RESPONSIVE TOGGLE */
+        #wrapper.toggled #sidebar-wrapper { margin-left: -280px; }
+        @media (max-width: 768px) {
+            #sidebar-wrapper { margin-left: -280px; position: fixed; height: 100vh; }
+            #wrapper.toggled #sidebar-wrapper { margin-left: 0; }
+        }
     </style>
+    @stack('styles')
 </head>
 <body>
 
     <div class="d-flex" id="wrapper">
 
-        {{-- ================= SIDEBAR ================= --}}
+        {{-- SIDEBAR WRAPPER --}}
         <div id="sidebar-wrapper" class="d-flex flex-column h-100 border-end border-gray-700">
             
-            {{-- A. HEADER SIDEBAR --}}
             <div class="sidebar-heading px-4 border-bottom border-gray-600 flex-shrink-0">
-                <div class="d-flex align-items-center gap-3 w-100">
-                    <img src="{{ asset('images/logo_ukit.png') }}" alt="Logo" class="w-8 md:w-9">
-                    <div class="d-flex flex-column leading-tight overflow-hidden">
-                        <span class="text-sm md:text-base font-bold text-white tracking-wide whitespace-nowrap">Dosen Panel</span>
-                        <span class="text-[10px] md:text-xs text-yellow-400 font-normal whitespace-nowrap">Manajemen Kelas</span>
+                <div class="d-flex align-items-center gap-3">
+                    <img src="{{ asset('images/logo_ukit.png') }}" alt="Logo" class="w-8">
+                    <div class="d-flex flex-column leading-tight">
+                        <span class="text-sm font-bold text-white uppercase tracking-wider">Dosen Panel</span>
+                        <span class="text-[10px] text-yellow-400 font-normal">Sistem Akademik</span>
                     </div>
-                    {{-- Tombol Tutup (Mobile Only) --}}
-                    <button id="sidebar-close" class="btn btn-link text-gray-400 hover:text-white ms-auto d-md-none p-0">
-                        <i class="bi bi-x-lg text-lg"></i>
-                    </button>
                 </div>
             </div>
 
-            {{-- B. MENU LIST (Menu Khusus Dosen) --}}
+            {{-- MENU LIST (SCROLLABLE NO BAR) --}}
             <div class="list-group list-group-flush mt-2 overflow-y-auto flex-grow-1 no-scrollbar pb-5">
                 
-                <p class="px-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-3">Utama</p>
-                
-                {{-- Menu 1: Dashboard --}}
-                <a href="{{ url('/dosen/dashboard') }}" 
-                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
-                   {{ Request::is('dosen/dashboard') ? 'active-menu' : '' }}">
-                    <i class="bi bi-speedometer2 text-lg"></i> Dashboard
+                <p class="sidebar-divider">Utama</p>
+                <a href="{{ url('/dosen/dashboard') }}" class="list-group-item d-flex align-items-center gap-3 px-4 py-3 transition-all {{ Request::is('dosen/dashboard') ? 'active-menu' : '' }}">
+                    <i class="bi bi-grid-fill fs-5"></i> Dashboard
                 </a>
 
-                <p class="px-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-4">Akademik</p>
-
-                {{-- Menu 2: Kelas Ajar (Inti Fitur) --}}
-                <a href="{{ url('/dosen/kelas') }}" 
-                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
-                   {{ Request::is('dosen/kelas*') ? 'active-menu' : '' }}">
-                    <i class="bi bi-easel-fill text-lg"></i> Kelas Ajar Saya
+                <p class="sidebar-divider">Akademik & Kelas</p>
+                <a href="{{ url('/dosen/kelas') }}" class="list-group-item d-flex align-items-center gap-3 px-4 py-3 transition-all {{ Request::is('dosen/kelas*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-journal-bookmark-fill fs-5"></i> Kelas Ajar Saya
+                </a>
+                <a href="{{ url('/dosen/mahasiswa') }}" class="list-group-item d-flex align-items-center gap-3 px-4 py-3 transition-all {{ Request::is('dosen/mahasiswa*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-people-fill fs-5"></i> Data Mahasiswa
                 </a>
 
+                <p class="sidebar-divider">Manajemen Materi</p>
+                <a href="{{ url('/dosen/materi') }}" class="list-group-item d-flex align-items-center gap-3 px-4 py-3 transition-all {{ Request::is('dosen/materi*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-file-earmark-plus-fill fs-5"></i> Susun Materi
+                </a>
+                {{-- MENU AI SMART BUILDER --}}
+                <a href="{{ url('/dosen/ai-builder') }}" class="list-group-item d-flex align-items-center gap-3 px-4 py-3 transition-all {{ Request::is('dosen/ai-builder*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-stars fs-5 text-yellow-400"></i> AI Smart Builder
+                </a>
+
+                <p class="sidebar-divider">Evaluasi & Tugas</p>
+                <a href="{{ url('/dosen/kuis') }}" class="list-group-item d-flex align-items-center gap-3 px-4 py-3 transition-all {{ Request::is('dosen/kuis*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-patch-question-fill fs-5"></i> Kuis & Bank Soal
+                </a>
+                <a href="{{ url('/dosen/tugas') }}" class="list-group-item d-flex align-items-center gap-3 px-4 py-3 transition-all {{ Request::is('dosen/tugas*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-link-45deg fs-4"></i> Penugasan (GitHub/Drive)
+                </a>
+
+                <p class="sidebar-divider">Interaksi</p>
+                <a href="{{ url('/dosen/diskusi') }}" class="list-group-item d-flex align-items-center gap-3 px-4 py-3 transition-all {{ Request::is('dosen/diskusi*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-chat-dots-fill fs-5"></i> Tanya Jawab Materi
+                </a>
             </div>
 
-            {{-- C. FOOTER SIDEBAR --}}
             <div class="p-4 border-top border-gray-600 flex-shrink-0 bg-[#2d3748]">
-                <a href="{{ url('/logout') }}" class="btn btn-danger w-100 flex items-center justify-center gap-2 text-sm shadow-md">
+                <a href="{{ url('/logout') }}" class="btn btn-danger btn-sm w-100 py-2 shadow-sm flex items-center justify-center gap-2">
                     <i class="bi bi-box-arrow-right"></i> Keluar
                 </a>
             </div>
         </div>
 
-        {{-- ================= KONTEN UTAMA ================= --}}
+        {{-- PAGE CONTENT --}}
         <div id="page-content-wrapper">
-
-            {{-- A. NAVBAR --}}
-            <nav class="navbar navbar-expand-lg top-navbar px-3 md:px-4 shadow-sm border-bottom d-flex align-items-center bg-white fixed-header-height">
+            
+            {{-- NAVBAR KUNING --}}
+            <nav class="navbar navbar-expand-lg top-navbar px-4">
                 <div class="container-fluid px-0">
-                    <button class="btn btn-link text-dark p-0 me-3" id="menu-toggle">
-                        <i class="bi bi-list text-2xl"></i>
+                    <button class="btn btn-dark btn-sm d-flex align-items-center justify-content-center shadow-sm" id="menu-toggle" style="width: 38px; height: 38px;">
+                        <i class="bi bi-list fs-4"></i>
                     </button>
 
                     <div class="ms-auto d-flex align-items-center gap-3">
-                        <div class="text-end hidden md:block" style="line-height: 1.2;">
-                            {{-- Mengambil Nama Dosen dari Session --}}
-                            <p class="mb-0 text-sm font-bold text-gray-800">{{ session('nama') }}</p>
-                            <p class="mb-0 text-xs text-gray-700 uppercase">Dosen Pengajar</p>
+                        <div class="text-end hidden md:block" style="line-height: 1.1;">
+                            <p class="mb-1 text-sm font-bold text-gray-900 uppercase tracking-tighter">{{ session('nama') }}</p>
+                            <p class="mb-0 text-[10px] text-gray-800 font-semibold opacity-75">DOSEN PENGAMPU</p>
                         </div>
-                        <div class="relative">
-                            <img src="{{ asset('images/' . (session('foto') ?? 'default.png')) }}" 
-                                 class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                                 onerror="this.src='https://ui-avatars.com/api/?name={{ session('nama') }}'">
-                        </div>
+                        {{-- FOTO PROFIL (FIX STORAGE PATH) --}}
+                        <img src="{{ session('foto') && session('foto') != 'default.png' ? asset('storage/profiles/' . session('foto')) : asset('images/logo_ukit.png') }}"
+                             class="rounded-full border-2 border-white shadow-sm bg-white"
+                             style="width: 42px; height: 42px; object-fit: cover; aspect-ratio: 1/1;"
+                             onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
                     </div>
                 </div>
             </nav>
 
-            {{-- B. AREA KONTEN (Yield) --}}
-            <div class="container-fluid px-3 md:px-4 py-4 md:py-5 overflow-y-auto" style="height: calc(100vh - 70px);">
+            {{-- KONTEN UTAMA (AREA SCROLLABLE TANPA BAR) --}}
+            <div class="container-fluid px-4 py-4 overflow-y-auto no-scrollbar" style="height: calc(100vh - 70px);">
                 @yield('content')
             </div>
 
         </div>
     </div>
 
-    {{-- 3. JAVASCRIPT TOGGLE (Sama dengan User) --}}
-    <script>
-        var el = document.getElementById("wrapper");
-        var toggleButton = document.getElementById("menu-toggle");
-        var sidebarClose = document.getElementById("sidebar-close");
-
-        function toggleSidebar() {
-            el.classList.toggle("toggled");
-            if (window.innerWidth <= 768) { document.body.classList.toggle("sidebar-open"); }
-        }
-
-        if(toggleButton) toggleButton.onclick = toggleSidebar;
-        if(sidebarClose) sidebarClose.onclick = toggleSidebar;
-
-        // Tutup Sidebar saat klik area luar (Mobile)
-        el.addEventListener('click', function(e) {
-            if (window.innerWidth <= 768 && el.classList.contains('toggled')) {
-                const sidebar = document.getElementById('sidebar-wrapper');
-                const menuBtn = document.getElementById('menu-toggle');
-                if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) { toggleSidebar(); }
-            }
-        });
-    </script>
+    {{-- SCRIPTS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById("menu-toggle").onclick = function(e) {
+            e.preventDefault();
+            document.getElementById("wrapper").classList.toggle("toggled");
+        };
+    </script>
     @stack('scripts')
 </body>
 </html>

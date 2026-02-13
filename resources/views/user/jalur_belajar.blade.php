@@ -14,37 +14,39 @@
         @forelse($concentrations as $item)
             <div class="col-12 col-md-6 col-lg-4">
                 {{-- CARD WRAPPER --}}
-                {{-- Added 'relative' class to fix stretched-link overlap issue --}}
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-100 d-flex flex-column hover:shadow-md transition-all duration-300 group relative">
                     
                     {{-- 1. BAGIAN GAMBAR (THUMBNAIL) --}}
                     <a href="{{ url('/mata-kuliah/' . $item->id) }}" class="relative h-48 bg-gray-100 overflow-hidden block">
+                        {{-- 
+                            LOGIKA GAMBAR TERBARU:
+                            Mengambil dari folder 'storage/thumbnails/'
+                        --}}
                         @if($item->gambar)
-                            {{-- FIX PATH: Menggunakan folder 'images/' sesuai Admin --}}
-                            <img src="{{ asset('images/' . $item->gambar) }}" 
-                                 alt="{{ $item->nama_konsentrasi }}"
-                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <img src="{{ asset('storage/thumbnails/' . $item->gambar) }}" 
+                                 alt="{{ $item->nama_konsentrasi }}" 
+                                 class="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                                 onerror="this.src='{{ asset('images/logo_ukit.png') }}'"> {{-- Fallback jika gambar error --}}
                         @else
-                            {{-- Fallback Image --}}
-                            <div class="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
-                                <i class="bi bi-image text-5xl opacity-50"></i>
+                            {{-- Placeholder jika tidak ada gambar --}}
+                            <div class="w-full h-full d-flex align-items-center justify-content-center bg-gray-200 text-gray-400">
+                                <i class="bi bi-image text-4xl"></i>
                             </div>
                         @endif
-                        
-                        {{-- Overlay Gradient Halus --}}
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
 
+                        {{-- Overlay Gradient --}}
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80"></div>
+                        
                         {{-- Badge Total MK --}}
-                        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1">
-                            <i class="bi bi-book-half text-blue-600"></i> {{ $item->total_mk ?? 0 }} Mata Kuliah
+                        <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-blue-900 shadow-sm flex items-center gap-1">
+                            <i class="bi bi-book-fill text-blue-500"></i> {{ $item->total_mk ?? 0 }} Mata Kuliah
                         </div>
                     </a>
 
                     {{-- 2. BAGIAN KONTEN --}}
                     <div class="p-4 flex-grow-1 d-flex flex-column">
                         {{-- Judul --}}
-                        <h5 class="font-bold text-lg text-gray-800 mb-2 group-hover:text-blue-900 transition-colors">
-                            {{-- stretched-link akan aman karena parent punya class 'relative' --}}
+                        <h5 class="font-bold text-lg text-gray-800 mb-2 group-hover:text-blue-700 transition">
                             <a href="{{ url('/mata-kuliah/' . $item->id) }}" class="text-decoration-none text-inherit stretched-link">
                                 {{ $item->nama_konsentrasi }}
                             </a>

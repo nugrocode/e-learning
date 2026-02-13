@@ -3,10 +3,9 @@
 @section('title', $materi->judul_materi)
 
 @section('content')
-    {{-- NAVIGASI KEMBALI (FIXED: MENGGUNAKAN SESSION) --}}
+    {{-- NAVIGASI KEMBALI --}}
     <div class="mb-3 animate-fade-in-up">
         @php
-            // Ambil ID dari Session. Jika session expired/kosong, kembali ke halaman utama jalur belajar
             $backLink = Session::has('active_concentration_id') 
                         ? url('/mata-kuliah/' . Session::get('active_concentration_id')) 
                         : url('/jalur-belajar');
@@ -120,7 +119,8 @@
                             @if($materi->file_lampiran)
                                 <div class="mt-3 pt-3 border-t">
                                     <p class="mb-2 text-xs font-bold text-gray-500 uppercase">File Pendukung</p>
-                                    <a href="{{ asset('uploads/materials/' . $materi->file_lampiran) }}" target="_blank" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 shadow-sm">
+                                    {{-- [UPDATED] Mengarah ke storage/materials --}}
+                                    <a href="{{ asset('storage/materials/' . $materi->file_lampiran) }}" target="_blank" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 shadow-sm">
                                         <i class="bi bi-file-earmark-arrow-down-fill"></i> Download Materi (PDF/PPT)
                                     </a>
                                 </div>
@@ -165,7 +165,7 @@
                         <div class="tab-pane fade" id="diskusi">
                             <style>
                                 .forum-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
-                                .forum-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #e5e7eb; }
+                                .forum-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #e5e7eb; background-color: #fff; }
                                 .reply-wrapper { display: none; margin-top: 10px; }
                                 .reply-container { margin-left: 10px; border-left: 2px solid #e5e7eb; padding-left: 10px; }
                                 .btn-link-custom { font-size: 0.75rem; color: #6b7280; cursor: pointer; text-decoration: none; font-weight: 600; background: none; border: none; padding: 0; }
@@ -192,7 +192,11 @@
                                     @forelse($diskusi as $chat)
                                         <div class="forum-card animate-fade-in-up" id="chat-{{ $chat->id }}">
                                             <div class="d-flex gap-2">
-                                                <img src="{{ asset('images/' . ($chat->user->foto_profil ?? 'default.png')) }}" class="forum-avatar" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($chat->user->nama_lengkap) }}'">
+                                                {{-- [UPDATED] Avatar Logic --}}
+                                                <img src="{{ $chat->user->foto_profil && $chat->user->foto_profil != 'default.png' ? asset('storage/profiles/' . $chat->user->foto_profil) : asset('images/logo_ukit.png') }}" 
+                                                     class="forum-avatar" 
+                                                     onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
+                                                
                                                 <div class="flex-grow-1">
                                                     <div class="d-flex align-items-center mb-1">
                                                         <span class="fw-bold text-xs md:text-sm text-dark">{{ $chat->user->nama_lengkap }}</span>
@@ -222,7 +226,11 @@
                                                             @foreach($chat->replies as $reply)
                                                                 <div class="bg-gray-50 p-2 rounded mb-2 border" id="reply-{{ $reply->id }}">
                                                                     <div class="d-flex gap-2">
-                                                                        <img src="{{ asset('images/' . ($reply->user->foto_profil ?? 'default.png')) }}" class="forum-avatar" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($reply->user->nama_lengkap) }}'">
+                                                                        {{-- [UPDATED] Avatar Reply --}}
+                                                                        <img src="{{ $reply->user->foto_profil && $reply->user->foto_profil != 'default.png' ? asset('storage/profiles/' . $reply->user->foto_profil) : asset('images/logo_ukit.png') }}" 
+                                                                             class="forum-avatar" 
+                                                                             onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
+                                                                        
                                                                         <div class="flex-grow-1">
                                                                             <div class="d-flex align-items-center mb-1">
                                                                                 <strong class="text-xs">{{ $reply->user->nama_lengkap }}</strong>
@@ -308,7 +316,9 @@
 
 @push('scripts')
     <script>
-        const imgBaseUrl = "{{ asset('images') }}/";
+        // [UPDATED] Base URL untuk Storage & Default Image
+        const storageUrl = "{{ asset('storage/profiles') }}/";
+        const defaultUrl = "{{ asset('images/logo_ukit.png') }}";
 
         function toggleForm(id) {
             const form = document.getElementById('replyForm-' + id);
@@ -370,14 +380,16 @@
                         if(res.status === 'success') {
                             const d = res.data;
                             const roleBadge = d.role == 'dosen' ? 'badge-dosen' : 'badge-mhs';
-                            const fotoSrc = d.foto ? imgBaseUrl + d.foto : `https://ui-avatars.com/api/?name=${encodeURIComponent(d.nama)}`;
+                            
+                            // [UPDATED] JS Logic untuk Foto Profil Baru
+                            const fotoSrc = (d.foto && d.foto !== 'default.png') ? storageUrl + d.foto : defaultUrl;
 
                             if (parentId == 0) {
                                 // Logic Tambah Komentar Utama
                                 const html = `
                                     <div class="forum-card animate-fade-in-up" id="chat-${d.id}">
                                         <div class="d-flex gap-2">
-                                            <img src="${fotoSrc}" class="forum-avatar">
+                                            <img src="${fotoSrc}" class="forum-avatar" onerror="this.src='${defaultUrl}'">
                                             <div class="flex-grow-1">
                                                 <div class="d-flex align-items-center mb-1">
                                                     <span class="fw-bold text-xs md:text-sm text-dark">${d.nama}</span>
@@ -409,7 +421,7 @@
                                 const html = `
                                     <div class="bg-gray-50 p-2 rounded mb-2 border" id="reply-${d.id}">
                                         <div class="d-flex gap-2">
-                                            <img src="${fotoSrc}" class="forum-avatar">
+                                            <img src="${fotoSrc}" class="forum-avatar" onerror="this.src='${defaultUrl}'">
                                             <div class="flex-grow-1">
                                                 <div class="d-flex align-items-center mb-1">
                                                     <strong class="text-xs">${d.nama}</strong>

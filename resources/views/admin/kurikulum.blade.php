@@ -9,11 +9,12 @@
             <p class="text-gray-500 text-sm">Pilih Konsentrasi untuk mengatur mata kuliah.</p>
         </div>
 
-        {{-- TOMBOL SAKTI: AI SMART DISTRIBUTE --}}
+        {{-- TOMBOL SAKTI: AI SMART DISTRIBUTE (IKON DIPERBARUI) --}}
         <form action="{{ url('/admin/kurikulum/auto-distribute') }}" method="POST" onsubmit="return confirm('AI akan memindai SEMUA mata kuliah dan mendistribusikannya ke Konsentrasi yang relevan secara otomatis. Lanjutkan?')">
             @csrf
             <button type="submit" class="btn btn-warning text-yellow-900 font-bold shadow-sm hover:bg-yellow-400 transition px-4 py-2 d-flex align-items-center gap-2">
-                <i class="bi bi-robot"></i> AI Smart Distribute All
+                {{-- GANTI IKON MENJADI MAGIC STARS --}}
+                <i class="bi bi-stars"></i> AI Smart Distribute All
             </button>
         </form>
     </div>
@@ -23,21 +24,19 @@
             <i class="bi bi-check-circle-fill text-xl"></i> {{ session('success') }}
         </div>
     @endif
-    @if(session('error'))
-        <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-lg">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
-        </div>
-    @endif
 
     <div class="row g-4">
         @forelse($konsentrasi as $item)
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-100 d-flex flex-column hover:shadow-md transition-shadow">
                     
-                    {{-- Header Gambar --}}
+                    {{-- HEADER GAMBAR (FIX PATH STORAGE) --}}
                     <div class="relative h-40 bg-gray-100 overflow-hidden">
                         @if($item->gambar)
-                            <img src="{{ asset('images/' . $item->gambar) }}" class="w-full h-full object-cover">
+                            {{-- PERBAIKAN PATH: asset('storage/thumbnails/...') --}}
+                            <img src="{{ asset('storage/thumbnails/' . $item->gambar) }}" 
+                                 class="w-full h-full object-cover"
+                                 onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
                         @else
                             <div class="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
                                 <i class="bi bi-diagram-3 text-5xl opacity-50"></i>
@@ -51,14 +50,15 @@
                         </div>
                     </div>
 
-                    {{-- Konten --}}
+                    {{-- KONTEN --}}
                     <div class="p-4 flex-grow-1 d-flex flex-column">
                         <h5 class="font-bold text-lg text-gray-800 mb-2">{{ $item->nama_konsentrasi }}</h5>
-                        <p class="text-sm text-gray-500 line-clamp-2 mb-4">
+                        <p class="text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed">
                             {{ $item->deskripsi ?? 'Kelola struktur pembelajaran untuk prodi ini.' }}
                         </p>
 
                         <div class="mt-auto border-t pt-3">
+                            {{-- LINK TETAP SESUAI ASLINYA --}}
                             <a href="{{ url('/admin/mata-kuliah/' . $item->id) }}" class="btn btn-primary bg-blue-900 w-100 border-0 font-bold text-sm py-2 rounded-lg hover:bg-blue-800 transition">
                                 <i class="bi bi-gear-wide-connected me-2"></i> Atur Kurikulum
                             </a>
@@ -68,11 +68,8 @@
             </div>
         @empty
             <div class="col-12 text-center py-5">
-                <div class="d-inline-block p-4 rounded-full bg-gray-50 mb-3">
-                    <i class="bi bi-exclamation-circle text-4xl text-gray-300"></i>
-                </div>
-                <h5 class="text-gray-600 font-bold">Belum ada Prodi</h5>
-                <p class="text-gray-400 text-sm">Silakan tambahkan Prodi terlebih dahulu di menu Master Data.</p>
+                <i class="bi bi-exclamation-circle text-4xl text-gray-200 d-block mb-3"></i>
+                <h5 class="text-gray-400 font-bold">Belum ada Prodi</h5>
             </div>
         @endforelse
     </div>

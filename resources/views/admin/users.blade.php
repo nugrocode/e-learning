@@ -58,22 +58,18 @@
     </div>
 
     {{-- AREA UTAMA --}}
-    <div class="bg-white border rounded shadow-sm">
+    <div class="bg-white border rounded shadow-sm overflow-hidden">
         
-        {{-- TOOLBAR (LAYOUT DIPERBAIKI: Justify Between) --}}
         <div class="p-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            
-            {{-- BAGIAN KIRI: JUDUL TABEL --}}
             <h5 class="m-0 fw-bold text-secondary d-flex align-items-center gap-2">
                 @if(request('role') == 'mahasiswa') <i class="bi bi-mortarboard text-success"></i> Data Mahasiswa
                 @elseif(request('role') == 'dosen') <i class="bi bi-briefcase text-primary"></i> Data Dosen
                 @elseif(request('role') == 'admin') <i class="bi bi-shield-lock text-warning"></i> Data Administrator
+                @else <i class="bi bi-people text-dark"></i> Semua Pengguna
                 @endif
             </h5>
 
-            {{-- BAGIAN KANAN: SEARCH & TOMBOL TAMBAH --}}
             <div class="d-flex gap-2">
-                {{-- Form Search --}}
                 <form action="{{ url('/admin/users') }}" method="GET" class="d-flex border rounded overflow-hidden bg-light" style="width: 250px;">
                     <input type="hidden" name="role" value="{{ request('role') }}">
                     <input type="text" name="search" class="form-control border-0 bg-transparent text-sm px-3" 
@@ -83,26 +79,14 @@
                     </button>
                 </form>
                 
-                {{-- Tombol Tambah (SERAGAM: "Tambah Data") --}}
                 <button class="btn btn-primary fw-bold text-nowrap text-sm px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambah">
                     <i class="bi bi-plus-lg me-1"></i> Tambah Data
                 </button>
             </div>
         </div>
 
-        @if(session('success'))
-            <div class="alert alert-success m-3 py-2 text-sm border-0 bg-success-subtle text-success-emphasis rounded-3">
-                <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger m-3 py-2 text-sm border-0 bg-danger-subtle text-danger-emphasis rounded-3">
-                <i class="bi bi-exclamation-circle me-2"></i> {{ session('error') }}
-            </div>
-        @endif
-
-        {{-- TABEL DATA --}}
-        <div class="table-responsive">
+        {{-- TABEL DATA (NO SCROLLBAR) --}}
+        <div class="table-responsive no-scrollbar">
             <table class="table table-hover align-middle mb-0" style="font-size: 0.875rem;">
                 <thead class="bg-light text-secondary text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
                     <tr>
@@ -117,8 +101,10 @@
                         <tr>
                             <td class="px-4 py-3 ps-4">
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="{{ asset('images/' . ($user->foto_profil ?? 'default.png')) }}" 
-                                         class="rounded-circle border shadow-sm" width="36" height="36" style="object-fit: cover;"
+                                    {{-- FIX PATH: MENGGUNAKAN STORAGE/PROFILES DAN ANTI GEPENG --}}
+                                    <img src="{{ $user->foto_profil && $user->foto_profil != 'default.png' ? asset('storage/profiles/' . $user->foto_profil) : asset('images/logo_ukit.png') }}" 
+                                         class="rounded-circle border shadow-sm" width="38" height="38" 
+                                         style="object-fit: cover; aspect-ratio: 1/1;"
                                          onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($user->nama_lengkap) }}&background=E9ECEF&color=6C757D&bold=true'">
                                     <div>
                                         <div class="fw-bold text-dark">{{ $user->nama_lengkap }}</div>
@@ -136,7 +122,7 @@
                             </td>
                             <td class="text-end px-4">
                                 <div class="d-inline-flex gap-2">
-                                    <button class="btn btn-sm btn-light text-primary border shadow-sm" 
+                                    <button class="btn btn-sm btn-light text-primary border shadow-sm rounded-lg" 
                                         data-bs-toggle="modal" data-bs-target="#modalEdit{{ $user->id }}" 
                                         title="Edit Data">
                                         <i class="bi bi-pencil-square"></i>
@@ -145,12 +131,12 @@
                                     @if($user->id != session('user_id'))
                                         <form action="{{ url('/admin/users/'.$user->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin hapus user ini?')">
                                             @csrf @method('DELETE')
-                                            <button class="btn btn-sm btn-light text-danger border shadow-sm" title="Hapus Permanen">
+                                            <button class="btn btn-sm btn-light text-danger border shadow-sm rounded-lg" title="Hapus Permanen">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
                                     @else
-                                        <button class="btn btn-sm btn-light text-muted border shadow-sm disabled" title="Ini Akun Anda">
+                                        <button class="btn btn-sm btn-light text-muted border shadow-sm disabled rounded-lg" title="Ini Akun Anda">
                                             <i class="bi bi-person-check-fill"></i>
                                         </button>
                                     @endif
@@ -160,10 +146,10 @@
 
                         {{-- MODAL EDIT --}}
                         <div class="modal fade" id="modalEdit{{ $user->id }}" tabindex="-1">
-                            <div class="modal-dialog">
+                            <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content rounded-4 border-0 shadow">
                                     <div class="modal-header py-3 bg-light border-bottom-0">
-                                        <h6 class="modal-title fw-bold">Edit Pengguna</h6>
+                                        <h6 class="modal-title fw-bold text-gray-800">Edit Pengguna</h6>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form action="{{ url('/admin/users/'.$user->id) }}" method="POST" enctype="multipart/form-data">
@@ -171,31 +157,30 @@
                                         <div class="modal-body">
                                             <div class="mb-3">
                                                 <label class="form-label text-secondary small fw-bold">Nama Lengkap</label>
-                                                <input type="text" name="nama_lengkap" class="form-control" value="{{ $user->nama_lengkap }}" required>
+                                                <input type="text" name="nama_lengkap" class="form-control rounded-lg" value="{{ $user->nama_lengkap }}" required>
                                             </div>
                                             <div class="row">
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label text-secondary small fw-bold">NIM / NIDN</label>
-                                                    <input type="text" name="nim" class="form-control" value="{{ $user->nim_nidn }}" required>
+                                                    <input type="text" name="nim" class="form-control rounded-lg" value="{{ $user->nim_nidn }}" required>
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label text-secondary small fw-bold">Role</label>
-                                                    <input type="text" class="form-control bg-light" value="{{ ucfirst($user->role) }}" readonly>
+                                                    <input type="text" class="form-control bg-light rounded-lg" value="{{ ucfirst($user->role) }}" readonly>
                                                     <input type="hidden" name="role" value="{{ $user->role }}">
                                                 </div>
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label text-secondary small fw-bold">Reset Password</label>
-                                                <input type="password" name="password" class="form-control" placeholder="Biarkan kosong jika tidak diganti">
+                                                <label class="form-label text-secondary small fw-bold">Reset Password (Opsional)</label>
+                                                <input type="password" name="password" class="form-control rounded-lg" placeholder="Isi hanya jika ingin mengganti">
                                             </div>
-                                            <div class="mb-3">
-                                                <label class="form-label text-secondary small fw-bold">Ganti Foto</label>
-                                                <input type="file" name="foto" class="form-control" accept="image/*">
+                                            <div class="mb-0">
+                                                <label class="form-label text-secondary small fw-bold">Ganti Foto Profil</label>
+                                                <input type="file" name="foto" class="form-control rounded-lg" accept="image/*">
                                             </div>
                                         </div>
                                         <div class="modal-footer py-2 border-top-0">
-                                            <button type="button" class="btn btn-light text-secondary font-bold" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-primary font-bold">Simpan</button>
+                                            <button type="submit" class="btn btn-primary w-100 font-bold py-2 rounded-lg shadow-sm">Simpan Perubahan</button>
                                         </div>
                                     </form>
                                 </div>
@@ -205,9 +190,8 @@
                     @empty
                         <tr>
                             <td colspan="4" class="text-center py-5">
-                                <div class="mb-2"><i class="bi bi-search text-gray-200" style="font-size: 3rem;"></i></div>
-                                <h6 class="text-secondary fw-bold">Data Kosong</h6>
-                                <p class="text-muted small">Belum ada user di kategori ini.</p>
+                                <div class="mb-2 opacity-20"><i class="bi bi-people" style="font-size: 3rem;"></i></div>
+                                <h6 class="text-secondary fw-bold">Data Tidak Ditemukan</h6>
                             </td>
                         </tr>
                     @endforelse
@@ -215,14 +199,16 @@
             </table>
         </div>
 
-        <div class="p-3 border-top d-flex justify-content-end">
+        @if($users->hasPages())
+        <div class="p-3 border-top d-flex justify-content-end no-scrollbar">
             {{ $users->links() }}
         </div>
+        @endif
     </div>
 
-    {{-- MODAL TAMBAH (SERAGAM "Tambah Data") --}}
+    {{-- MODAL TAMBAH --}}
     <div class="modal fade" id="modalTambah" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow">
                 <div class="modal-header py-3 bg-primary text-white border-bottom-0">
                     <h6 class="modal-title fw-bold"><i class="bi bi-person-plus me-2"></i>Tambah Data Baru</h6>
@@ -233,36 +219,33 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label text-secondary small text-uppercase fw-bold">Nama Lengkap</label>
-                            <input type="text" name="nama_lengkap" class="form-control" placeholder="Cth: Nugroho Indrayadi" required>
+                            <input type="text" name="nama_lengkap" class="form-control rounded-lg" placeholder="Masukkan nama lengkap" required>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label text-secondary small text-uppercase fw-bold">NIM / NIDN</label>
-                                <input type="text" name="nim" class="form-control" placeholder="Nomor Induk" required>
+                                <input type="text" name="nim" class="form-control rounded-lg" placeholder="Nomor Induk" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label text-secondary small text-uppercase fw-bold">Role</label>
-                                {{-- Role Terkunci Otomatis --}}
-                                <input type="text" class="form-control bg-light fw-bold text-primary" value="{{ ucfirst(request('role')) }}" readonly>
-                                <input type="hidden" name="role" value="{{ request('role') }}">
+                                <label class="form-label text-secondary small text-uppercase fw-bold">Role Default</label>
+                                <input type="text" class="form-control bg-light fw-bold text-primary rounded-lg" value="{{ ucfirst(request('role', 'mahasiswa')) }}" readonly>
+                                <input type="hidden" name="role" value="{{ request('role', 'mahasiswa') }}">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-secondary small text-uppercase fw-bold">Password Default</label>
-                            <input type="password" name="password" class="form-control" placeholder="Min. 4 karakter" required>
+                            <label class="form-label text-secondary small text-uppercase fw-bold">Password Login</label>
+                            <input type="password" name="password" class="form-control rounded-lg" placeholder="Min. 4 karakter" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label text-secondary small fw-bold">Foto Profil</label>
-                            <input type="file" name="foto" class="form-control" accept="image/*">
+                        <div class="mb-0">
+                            <label class="form-label text-secondary small fw-bold">Foto Profil (Opsional)</label>
+                            <input type="file" name="foto" class="form-control rounded-lg" accept="image/*">
                         </div>
                     </div>
                     <div class="modal-footer py-2 border-top-0">
-                        <button type="button" class="btn btn-light text-secondary font-bold" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary font-bold">Simpan Data</button>
+                        <button type="submit" class="btn btn-primary w-100 font-bold py-2 rounded-lg shadow-sm">Simpan User Baru</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
 @endsection
