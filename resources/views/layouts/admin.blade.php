@@ -3,175 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title') - Administrator</title>
-    
-    {{-- Bootstrap 5 & Icons --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
-    {{-- Tailwind CSS --}}
+    <title>@yield('title', 'Admin Panel') - E-Learning UKI Toraja</title>
+
+    {{-- CDN Libraries --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    {{-- Font Inter & Global CSS --}}
+    {{-- Custom CSS --}}
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f3f4f6; 
-            overflow: hidden; /* Mencegah scrollbar ganda di body */
+        /* 1. HILANGKAN SCROLLBAR (TAPI TETAP BISA DI-SCROLL) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
 
-        /* --- 1. PERBAIKAN SCROLLBAR (TIPIS & TIDAK MERUSAK LAYOUT) --- */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* Scrollbar Sidebar (Gelap) */
-        .sidebar-nav::-webkit-scrollbar-thumb { background: #374151; }
-        .sidebar-nav::-webkit-scrollbar-thumb:hover { background: #4b5563; }
-
-        /* --- 2. PERBAIKAN TOMBOL AKSI BERTUMPUK (GLOBAL FIX) --- */
-        .table td:last-child {
-            white-space: nowrap !important;
-            width: 1%; 
-        }
-        .table td:last-child .btn, 
-        .table td:last-child form {
-            display: inline-block;
-            margin-right: 4px; 
+        /* 2. FIX TINGGI HEADER AGAR SIMETRIS (Menimpa style.css) */
+        /* Menggunakan selector ID agar lebih kuat/prioritas */
+        #sidebar-wrapper .sidebar-heading,
+        .top-navbar {
+            height: 70px !important;      /* Paksa tinggi 70px */
+            min-height: 70px !important;  /* Cegah gepeng */
+            max-height: 70px !important;
+            display: flex;
+            align-items: center;
         }
 
-        /* --- 3. MENU STYLING --- */
-        .nav-link-custom {
-            position: relative;
-            color: #9ca3af;
-            transition: all 0.2s;
-            border-radius: 6px;
-            margin-bottom: 4px;
+        /* 3. PERBAIKAN WARNA ITEM SIDEBAR */
+        #sidebar-wrapper {
+            background-color: #2d3748; /* Samakan dengan warna User */
         }
-        .nav-link-custom:hover {
-            background-color: rgba(255, 255, 255, 0.08);
+        #sidebar-wrapper .list-group-item {
+            border-left: 3px solid transparent;
+            color: #cbd5e0; /* Warna teks default */
+        }
+        /* State Aktif (Kuning Emas) */
+        #sidebar-wrapper .list-group-item.active-menu {
+            background: rgba(255, 255, 255, 0.05);
+            border-left-color: #FACC15; 
+            color: #fff !important;
+            font-weight: 600;
+        }
+        #sidebar-wrapper .list-group-item:hover {
+            background-color: #4a5568;
             color: #fff;
         }
-        .nav-link-custom.active {
-            background-color: #fbbf24;
-            color: #111827 !important;
-            font-weight: 600;
-            box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.2);
-        }
-        
-        /* Sidebar Toggle Animation */
-        #sidebar-wrapper { width: 260px; transition: margin 0.25s ease-out; }
-        body.toggled #sidebar-wrapper { margin-left: -260px; }
-        
-        @media (max-width: 768px) { 
-            #sidebar-wrapper { margin-left: -260px; } 
-            body.toggled #sidebar-wrapper { margin-left: 0; } 
-        }
     </style>
+
+    @stack('styles')
 </head>
 <body>
 
-    <div class="d-flex h-screen w-full overflow-hidden">
+    <div class="d-flex" id="wrapper">
 
-        {{-- ================= SIDEBAR ================= --}}
-        <aside id="sidebar-wrapper" class="bg-[#111827] text-white flex-shrink-0 d-flex flex-column border-end border-gray-800 z-20">
+        {{-- ========================================= --}}
+        {{-- SIDEBAR WRAPPER                           --}}
+        {{-- ========================================= --}}
+        <div id="sidebar-wrapper" class="d-flex flex-column h-100 border-end border-gray-700">
             
-            {{-- LOGO AREA --}}
-            <div class="h-16 d-flex align-items-center px-4 bg-[#0f172a] border-b border-gray-800 flex-shrink-0">
-                <div class="d-flex align-items-center gap-3">
-                    {{-- [FIX LOGO] Pastikan nama file di public/images adalah logo.png --}}
-                    <img src="{{ asset('images/logo_ukit.png') }}" alt="Logo" class="h-8 w-auto object-contain" 
-                         onerror="this.src='https://placehold.co/40x40/fbbf24/000?text=U'">
-                    <div class="leading-tight whitespace-nowrap">
-                        <h6 class="m-0 fw-bold text-[14px] tracking-wide text-white">ADMINISTRATOR</h6>
-                        <span class="text-[10px] text-yellow-500 fw-bold tracking-wider">CONTROL PANEL</span>
+            {{-- HEADER SIDEBAR (LOGO) --}}
+            {{-- Flex-shrink-0 agar header tidak menyusut saat menu panjang --}}
+            <div class="sidebar-heading px-4 border-bottom border-gray-600 flex-shrink-0">
+                <div class="d-flex align-items-center gap-3 w-100">
+                    {{-- Logo --}}
+                    <img src="{{ asset('images/logo_ukit.png') }}" alt="Logo" class="w-8 md:w-9" onerror="this.src='https://ui-avatars.com/api/?name=UK&background=random'">
+                    
+                    {{-- Teks Admin --}}
+                    <div class="d-flex flex-column leading-tight overflow-hidden">
+                        <span class="text-sm md:text-base font-bold text-white tracking-wide whitespace-nowrap">Administrator</span>
+                        <span class="text-[10px] md:text-xs text-yellow-400 font-normal whitespace-nowrap">Control Panel</span>
                     </div>
+
+                    {{-- Tombol Tutup (Hanya di HP) --}}
+                    <button id="sidebar-close" class="btn btn-link text-gray-400 hover:text-white ms-auto d-md-none p-0">
+                        <i class="bi bi-x-lg text-lg"></i>
+                    </button>
                 </div>
             </div>
 
-            {{-- MENU LIST --}}
-            <div class="flex-grow-1 overflow-y-auto sidebar-nav p-3">
-                <nav class="nav flex-column">
-                    <a href="{{ url('/admin/dashboard') }}" class="nav-link-custom d-flex align-items-center gap-3 px-3 py-2 text-sm {{ Request::is('admin/dashboard') ? 'active' : '' }}">
-                        <i class="bi bi-grid-fill text-lg"></i> <span>Dashboard</span>
-                    </a>
+            {{-- MENU LIST (SCROLLABLE TANPA BAR) --}}
+            <div class="list-group list-group-flush mt-2 overflow-y-auto flex-grow-1 no-scrollbar pb-5">
+                
+                {{-- Group: Utama --}}
+                <p class="px-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-3">Utama</p>
+                <a href="{{ url('/admin/dashboard') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('admin/dashboard') ? 'active-menu' : '' }}">
+                    <i class="bi bi-grid-fill text-lg"></i> Dashboard
+                </a>
 
-                    <div class="text-[10px] fw-bold text-gray-500 uppercase tracking-wider mt-4 mb-2 px-3">Pengguna</div>
-                    <a href="{{ url('/admin/users') }}" class="nav-link-custom d-flex align-items-center gap-3 px-3 py-2 text-sm {{ Request::is('admin/users*') ? 'active' : '' }}">
-                        <i class="bi bi-people-fill text-lg"></i> <span>Manajemen User</span>
-                    </a>
+                {{-- Group: Pengguna --}}
+                <p class="px-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-4">Pengguna</p>
+                <a href="{{ url('/admin/users') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('admin/users*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-people-fill text-lg"></i> Manajemen User
+                </a>
 
-                    <div class="text-[10px] fw-bold text-gray-500 uppercase tracking-wider mt-4 mb-2 px-3">Master Data</div>
-                    <a href="{{ url('/admin/konsentrasi') }}" class="nav-link-custom d-flex align-items-center gap-3 px-3 py-2 text-sm {{ Request::is('admin/konsentrasi*') ? 'active' : '' }}">
-                        <i class="bi bi-diagram-3-fill text-lg"></i> <span>Prodi / Konsentrasi</span>
-                    </a>
-                    <a href="{{ url('/admin/bank-mata-kuliah') }}" class="nav-link-custom d-flex align-items-center gap-3 px-3 py-2 text-sm {{ Request::is('admin/bank-mata-kuliah*') ? 'active' : '' }}">
-                        <i class="bi bi-hdd-stack-fill text-lg"></i> <span>Bank Mata Kuliah</span>
-                    </a>
+                {{-- Group: Master Data --}}
+                <p class="px-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-4">Master Data</p>
+                <a href="{{ url('/admin/konsentrasi') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('admin/konsentrasi*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-diagram-3-fill text-lg"></i> Prodi / Konsentrasi
+                </a>
+                <a href="{{ url('/admin/bank-mata-kuliah') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('admin/bank-mata-kuliah*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-hdd-stack-fill text-lg"></i> Bank Mata Kuliah
+                </a>
 
-                    <div class="text-[10px] fw-bold text-gray-500 uppercase tracking-wider mt-4 mb-2 px-3">Akademik</div>
-                    <a href="{{ url('/admin/mata-kuliah') }}" class="nav-link-custom d-flex align-items-center gap-3 px-3 py-2 text-sm {{ Request::is('admin/mata-kuliah*') ? 'active' : '' }}">
-                        <i class="bi bi-collection-fill text-lg"></i> <span>Distribusi Kurikulum</span>
-                    </a>
-                    <a href="{{ url('/admin/pengumuman') }}" class="nav-link-custom d-flex align-items-center gap-3 px-3 py-2 text-sm {{ Request::is('admin/pengumuman*') ? 'active' : '' }}">
-                        <i class="bi bi-megaphone-fill text-lg"></i> <span>Pengumuman</span>
-                    </a>
-                </nav>
+                {{-- Group: Akademik --}}
+                <p class="px-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-4">Akademik</p>
+                <a href="{{ url('/admin/mata-kuliah') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('admin/mata-kuliah*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-collection-fill text-lg"></i> Distribusi Kurikulum
+                </a>
+                <a href="{{ url('/admin/pengumuman') }}" 
+                   class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
+                   {{ Request::is('admin/pengumuman*') ? 'active-menu' : '' }}">
+                    <i class="bi bi-megaphone-fill text-lg"></i> Pengumuman
+                </a>
             </div>
 
-            {{-- FOOTER --}}
-            <div class="p-3 bg-[#0f172a] border-t border-gray-800 flex-shrink-0">
-                <a href="{{ url('/logout') }}" class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2 py-2 text-xs fw-bold shadow-sm">
+            {{-- FOOTER SIDEBAR --}}
+            <div class="p-4 border-top border-gray-600 flex-shrink-0 bg-[#2d3748]">
+                <a href="{{ url('/logout') }}" class="btn btn-danger w-100 flex items-center justify-center gap-2 text-sm shadow-md">
                     <i class="bi bi-box-arrow-right"></i> Keluar
                 </a>
             </div>
-        </aside>
+        </div>
 
-        {{-- ================= MAIN CONTENT ================= --}}
-        <div class="flex-grow-1 d-flex flex-column h-screen overflow-hidden bg-gray-50 relative w-full">
-            
+        {{-- ========================================= --}}
+        {{-- PAGE CONTENT                              --}}
+        {{-- ========================================= --}}
+        <div id="page-content-wrapper">
+
             {{-- NAVBAR --}}
-            <header class="h-16 bg-yellow-400 shadow-sm d-flex align-items-center justify-content-between px-4 z-10 flex-shrink-0">
-                <button class="btn btn-transparent p-0 border-0" id="sidebarToggle">
-                    <i class="bi bi-list text-2xl text-slate-900"></i>
-                </button>
-                <div class="d-flex align-items-center gap-3">
-                    <div class="text-end d-none d-md-block lh-sm">
-                        <div class="fw-bold text-slate-900 text-sm">{{ session('nama') ?? 'Administrator' }}</div>
-                        <div class="text-[10px] text-slate-800 uppercase tracking-wider font-bold">Super Admin</div>
-                    </div>
-                    
-                    {{-- [FIX FOTO PROFIL] Tampilkan Foto jika ada, Inisial jika tidak ada --}}
-                    <div class="w-9 h-9 rounded-circle bg-white border border-yellow-500 overflow-hidden shadow-sm d-flex align-items-center justify-content-center">
-                        @if(session('foto'))
-                            <img src="{{ asset('images/' . session('foto')) }}" class="w-full h-full object-cover">
-                        @else
-                            <span class="text-yellow-600 fw-bold">{{ substr(session('nama') ?? 'A', 0, 1) }}</span>
-                        @endif
-                    </div>
+            {{-- Class 'top-navbar' akan memaksa tinggi menjadi 70px berkat CSS !important di atas --}}
+            <nav class="navbar navbar-expand-lg top-navbar px-3 md:px-4 shadow-sm border-bottom d-flex align-items-center bg-white">
+                <div class="container-fluid px-0">
 
-                </div>
-            </header>
+                    {{-- Tombol Hamburger --}}
+                    <button class="btn btn-link text-dark p-0 me-3" id="menu-toggle">
+                        <i class="bi bi-list text-2xl"></i>
+                    </button>
 
-            {{-- CONTENT SCROLLABLE --}}
-            <main class="flex-grow-1 overflow-y-auto custom-scroll p-4">
-                <div class="container-fluid p-0" style="min-width: 0;">
-                    @yield('content')
+                    <div class="ms-auto d-flex align-items-center gap-3">
+                        <div class="text-end hidden md:block" style="line-height: 1.2;">
+                            <p class="mb-0 text-sm font-bold text-gray-800">{{ session('nama') ?? 'Administrator' }}</p>
+                            <p class="mb-0 text-xs text-gray-700 uppercase">Super Admin</p>
+                        </div>
+                        <div class="relative">
+                            <img src="{{ asset('images/' . (session('foto') ?? 'default.png')) }}"
+                                 class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                                 onerror="this.src='https://ui-avatars.com/api/?name={{ session('nama') ?? 'Admin' }}'">
+                        </div>
+                    </div>
                 </div>
-            </main>
+            </nav>
+
+            {{-- KONTEN UTAMA --}}
+            {{-- Overflow-y-auto di sini agar konten bisa discroll terpisah dari Navbar --}}
+            <div class="container-fluid px-3 md:px-4 py-4 md:py-5 overflow-y-auto" style="height: calc(100vh - 70px);">
+                @yield('content')
+            </div>
 
         </div>
     </div>
 
-    {{-- Script Toggle --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Script Toggle Sidebar --}}
     <script>
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.body.classList.toggle('toggled');
+        var el = document.getElementById("wrapper");
+        var toggleButton = document.getElementById("menu-toggle");
+        var sidebarClose = document.getElementById("sidebar-close");
+
+        function toggleSidebar() {
+            el.classList.toggle("toggled");
+            if (window.innerWidth <= 768) {
+                document.body.classList.toggle("sidebar-open");
+            }
+        }
+
+        if(toggleButton) toggleButton.onclick = toggleSidebar;
+        if(sidebarClose) sidebarClose.onclick = toggleSidebar;
+
+        // Tutup Sidebar saat klik overlay (Mobile)
+        el.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768 && el.classList.contains('toggled')) {
+                const sidebar = document.getElementById('sidebar-wrapper');
+                const menuBtn = document.getElementById('menu-toggle');
+                if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+                    toggleSidebar();
+                }
+            }
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    @stack('scripts')
 </body>
 </html>

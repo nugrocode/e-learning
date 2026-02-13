@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Hash; 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage; // [WAJIB] Import Storage
+
 use App\Models\Concentration;
 use App\Models\Course;
 use App\Models\Material;
@@ -188,18 +190,16 @@ class LearningController extends Controller
 
 
     // ==========================================================
-    // BAGIAN 2: MANAJEMEN USER (UX FIXED)
+    // BAGIAN 2: MANAJEMEN USER (UPDATED)
     // ==========================================================
 
     public function adminUsersIndex(Request $request) {
-        // UX FIX: Jika tidak ada role filter, redirect otomatis ke Mahasiswa
         if (!$request->has('role')) {
             return redirect('/admin/users?role=mahasiswa');
         }
 
         $query = User::query();
 
-        // 1. LOGIKA SEARCH (Cari Nama atau NIM/NIDN)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -208,13 +208,9 @@ class LearningController extends Controller
             });
         }
 
-        // 2. LOGIKA FILTER ROLE (Wajib)
         $query->where('role', $request->role);
-
-        // Pagination
         $users = $query->latest()->paginate(10)->withQueryString();
 
-        // Stats Counter
         $stats = [
             'total' => User::count(),
             'dosen' => User::where('role', 'dosen')->count(),
@@ -222,12 +218,13 @@ class LearningController extends Controller
             'admin' => User::where('role', 'admin')->count(),
         ];
 
-        return view('admin.users.index', compact('users', 'stats'));
+        // [UPDATED] View Path ke admin.users (Flat)
+        return view('admin.users', compact('users', 'stats'));
     }
 
     public function adminUserStore(Request $request) {
         $request->validate([
-            'nim' => 'required|unique:users,nim_nidn', // Validasi ke kolom nim_nidn
+            'nim' => 'required|unique:users,nim_nidn',
             'nama_lengkap' => 'required',
             'role' => 'required',
             'password' => 'required|min:4',
@@ -237,13 +234,15 @@ class LearningController extends Controller
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('images'), $filename);
+            
+            // [UPDATED] Storage Public - Folder 'profiles'
+            $file->storeAs('profiles', $filename, 'public');
         }
 
         User::create([
-            'nim_nidn' => $request->nim, // Map ke nim_nidn
+            'nim_nidn' => $request->nim,
             'nama_lengkap' => $request->nama_lengkap,
-            'password' => md5($request->password), // MD5
+            'password' => md5($request->password),
             'role' => $request->role,
             'foto_profil' => $filename
         ]);
@@ -264,12 +263,16 @@ class LearningController extends Controller
         }
 
         if ($request->hasFile('foto')) {
-            if ($user->foto_profil && file_exists(public_path('images/'.$user->foto_profil))) {
-                unlink(public_path('images/'.$user->foto_profil));
+            // [UPDATED] Hapus file lama di Storage jika ada dan bukan default
+            if ($user->foto_profil && $user->foto_profil != 'default.png') {
+                Storage::disk('public')->delete('profiles/' . $user->foto_profil);
             }
+
             $file = $request->file('foto');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('images'), $filename);
+            
+            // [UPDATED] Simpan file baru
+            $file->storeAs('profiles', $filename, 'public');
             $user->foto_profil = $filename;
         }
 
@@ -282,14 +285,12 @@ class LearningController extends Controller
     }
 
     public function adminUserDestroy($id) {
-        // Cek agar tidak menghapus diri sendiri
         if ($id == Session::get('user_id')) {
             return back()->with('error', 'Anda tidak dapat menghapus akun sendiri!');
         }
 
         $user = User::findOrFail($id);
 
-        // --- CLEANUP DATA TERKAIT (SOLUSI FK CONSTRAINT) ---
         Progress::where('user_id', $id)->delete();
         Submission::where('user_id', $id)->delete();
         QuizScore::where('user_id', $id)->delete();
@@ -297,9 +298,9 @@ class LearningController extends Controller
         Notification::where('user_id', $id)->orWhere('sender_id', $id)->delete();
         Course::where('dosen_id', $id)->update(['dosen_id' => null]);
 
-        // Hapus File
-        if ($user->foto_profil && file_exists(public_path('images/'.$user->foto_profil))) {
-            unlink(public_path('images/'.$user->foto_profil));
+        // [UPDATED] Hapus File di Storage
+        if ($user->foto_profil && $user->foto_profil != 'default.png') {
+            Storage::disk('public')->delete('profiles/' . $user->foto_profil);
         }
         
         $user->delete();
@@ -308,13 +309,14 @@ class LearningController extends Controller
 
 
     // ==========================================================
-    // BAGIAN 3: MASTER DATA - BANK MATA KULIAH
+    // BAGIAN 3: MASTER DATA - BANK MATA KULIAH (UPDATED)
     // ==========================================================
 
     public function adminBankIndex() {
         $courses = Course::with('dosen')->latest()->get();
         $dosens = User::where('role', 'dosen')->get();
-        return view('admin.bank_mk.index', compact('courses', 'dosens'));
+        // [UPDATED] View Path Flat
+        return view('admin.bank_mk', compact('courses', 'dosens'));
     }
 
     public function adminBankStore(Request $request) {
@@ -327,7 +329,8 @@ class LearningController extends Controller
         if ($request->hasFile('gambar')) {
             $file = $request->file('gambar');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('images'), $filename);
+            // [UPDATED] Simpan ke folder 'thumbnails'
+            $file->storeAs('thumbnails', $filename, 'public');
         }
 
         Course::create([
@@ -348,10 +351,15 @@ class LearningController extends Controller
         ]);
 
         if ($request->hasFile('gambar')) {
-            if ($c->gambar && file_exists(public_path('images/'.$c->gambar))) unlink(public_path('images/'.$c->gambar));
+            // [UPDATED] Hapus gambar lama
+            if ($c->gambar) {
+                Storage::disk('public')->delete('thumbnails/' . $c->gambar);
+            }
+
             $file = $request->file('gambar');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('images'), $filename);
+            // [UPDATED] Simpan gambar baru
+            $file->storeAs('thumbnails', $filename, 'public');
             $c->gambar = $filename;
         }
 
@@ -361,7 +369,12 @@ class LearningController extends Controller
 
     public function adminBankDestroy($id) {
         $c = Course::findOrFail($id);
-        if ($c->gambar && file_exists(public_path('images/'.$c->gambar))) unlink(public_path('images/'.$c->gambar));
+        
+        // [UPDATED] Hapus file Storage
+        if ($c->gambar) {
+            Storage::disk('public')->delete('thumbnails/' . $c->gambar);
+        }
+        
         $c->concentrations()->detach();
         $c->delete(); 
         return back()->with('success', 'Mata Kuliah dihapus permanen dari sistem.');
@@ -369,7 +382,7 @@ class LearningController extends Controller
 
 
     // ==========================================================
-    // BAGIAN 4: DISTRIBUSI KURIKULUM (PIVOT)
+    // BAGIAN 4: DISTRIBUSI KURIKULUM & PENGUMUMAN (UPDATED)
     // ==========================================================
 
     public function adminDashboard() {
@@ -378,11 +391,16 @@ class LearningController extends Controller
         $total_konsentrasi = Concentration::count();
         $total_mk = Course::count();
         $recent_users = User::latest()->take(5)->get();
+        // View dashboard tetap
         return view('admin.dashboard', compact('total_mhs', 'total_dosen', 'total_konsentrasi', 'total_mk', 'recent_users'));
     }
 
     // --- PENGUMUMAN ---
-    public function adminPengumumanIndex() { $pengumuman = Announcement::latest()->get(); return view('admin.pengumuman.index', compact('pengumuman')); }
+    public function adminPengumumanIndex() { 
+        $pengumuman = Announcement::latest()->get(); 
+        // [UPDATED] View Path Flat
+        return view('admin.pengumuman', compact('pengumuman')); 
+    }
     public function adminPengumumanStore(Request $request) { Announcement::create($request->all() + ['is_active'=>1]); return back()->with('success', 'Pengumuman diterbitkan!'); }
     public function adminPengumumanUpdate(Request $request, $id) { Announcement::findOrFail($id)->update($request->all()); return back()->with('success', 'Pengumuman diperbarui!'); }
     public function adminPengumumanDestroy($id) { Announcement::findOrFail($id)->delete(); return back()->with('success', 'Pengumuman dihapus.'); }
@@ -391,28 +409,55 @@ class LearningController extends Controller
     public function adminKonsentrasiIndex() {
         $konsentrasi = Concentration::all();
         foreach($konsentrasi as $k) { $k->total_mk = $k->courses()->count(); }
-        return view('admin.konsentrasi.index', compact('konsentrasi'));
+        // [UPDATED] View Path Flat
+        return view('admin.konsentrasi', compact('konsentrasi'));
     }
+    
     public function adminKonsentrasiStore(Request $request) {
         $filename = null;
-        if ($request->hasFile('gambar')) { $file=$request->file('gambar'); $filename=time().'_'.$file->getClientOriginalName(); $file->move(public_path('images'), $filename); }
+        if ($request->hasFile('gambar')) { 
+            $file = $request->file('gambar'); 
+            $filename = time() . '_' . $file->getClientOriginalName(); 
+            // [UPDATED] Storage
+            $file->storeAs('thumbnails', $filename, 'public');
+        }
         Concentration::create(['nama_konsentrasi'=>$request->nama_konsentrasi, 'deskripsi'=>$request->deskripsi, 'gambar'=>$filename]);
         return back()->with('success', 'Prodi ditambahkan!');
     }
+    
     public function adminKonsentrasiUpdate(Request $request, $id) {
         $k = Concentration::findOrFail($id);
-        if ($request->hasFile('gambar')) { $file=$request->file('gambar'); $filename=time().'_'.$file->getClientOriginalName(); $file->move(public_path('images'), $filename); $k->gambar=$filename; }
+        if ($request->hasFile('gambar')) { 
+            // [UPDATED] Delete Old
+            if ($k->gambar) {
+                Storage::disk('public')->delete('thumbnails/' . $k->gambar);
+            }
+            $file = $request->file('gambar'); 
+            $filename = time() . '_' . $file->getClientOriginalName(); 
+            // [UPDATED] Store New
+            $file->storeAs('thumbnails', $filename, 'public');
+            $k->gambar = $filename; 
+        }
         $k->update($request->except('gambar'));
         return back()->with('success', 'Data diperbarui!');
     }
-    public function adminKonsentrasiDestroy($id) { Concentration::findOrFail($id)->delete(); return back()->with('success', 'Prodi dihapus.'); }
+    
+    public function adminKonsentrasiDestroy($id) { 
+        $k = Concentration::findOrFail($id);
+        if ($k->gambar) {
+            Storage::disk('public')->delete('thumbnails/' . $k->gambar);
+        }
+        $k->delete(); 
+        return back()->with('success', 'Prodi dihapus.'); 
+    }
 
     // --- KURIKULUM & MK ---
     
     public function adminKurikulumIndex() {
         $konsentrasi = Concentration::all();
         foreach($konsentrasi as $k) { $k->total_mk = $k->courses()->count(); }
-        return view('admin.kurikulum.index', compact('konsentrasi'));
+        // [UPDATED] View Path Flat
+        return view('admin.kurikulum', compact('konsentrasi'));
     }
 
     public function adminKurikulumShow($id) {
@@ -429,7 +474,8 @@ class LearningController extends Controller
             ->wherePivot('urutan', 0)
             ->get();
 
-        return view('admin.kurikulum.detail', compact('konsentrasi', 'courses', 'new_courses', 'dosens'));
+        // [UPDATED] View Path Flat (kurikulum_detail)
+        return view('admin.kurikulum_detail', compact('konsentrasi', 'courses', 'new_courses', 'dosens'));
     }
 
     public function adminCourseStore(Request $request) {
@@ -446,7 +492,8 @@ class LearningController extends Controller
             if ($request->hasFile('gambar')) {
                 $file = $request->file('gambar');
                 $filename = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('images'), $filename);
+                // [UPDATED] Storage
+                $file->storeAs('thumbnails', $filename, 'public');
             }
             
             $course = Course::create([
@@ -475,10 +522,14 @@ class LearningController extends Controller
         $c = Course::findOrFail($id);
         
         if ($request->hasFile('gambar')) { 
-            $file=$request->file('gambar'); 
-            $filename=time().'_'.$file->getClientOriginalName(); 
-            $file->move(public_path('images'), $filename); 
-            $c->gambar=$filename; 
+            if ($c->gambar) {
+                Storage::disk('public')->delete('thumbnails/' . $c->gambar);
+            }
+            $file = $request->file('gambar'); 
+            $filename = time() . '_' . $file->getClientOriginalName(); 
+            // [UPDATED] Storage
+            $file->storeAs('thumbnails', $filename, 'public'); 
+            $c->gambar = $filename; 
         }
         
         $c->update($request->except('gambar')); 
@@ -498,7 +549,7 @@ class LearningController extends Controller
 
 
     // ==========================================================
-    // BAGIAN 5: FITUR USER / MAHASISWA
+    // BAGIAN 5: FITUR USER / MAHASISWA (UPDATED)
     // ==========================================================
 
     public function dashboard() { 
@@ -513,13 +564,9 @@ class LearningController extends Controller
     }
 
     public function showCourses($id) {
-        // [FIX 1] SIMPAN ID KONSENTRASI KE SESSION
-        // Agar saat di halaman materi, sistem tahu user berasal dari prodi mana
         Session::put('active_concentration_id', $id);
-
         $concentration = Concentration::findOrFail($id);
         
-        // Ambil MK berdasarkan urutan pivot
         $courses = $concentration->courses()
                         ->with('dosen')
                         ->wherePivot('urutan', '>', 0)
@@ -527,12 +574,9 @@ class LearningController extends Controller
                         ->get();
                         
         $user_id = Session::get('user_id');
-
-        // VARIABLE PENTING UNTUK LOGIKA BERURUTAN
-        $is_previous_completed = true; // MK pertama dianggap terbuka (kecuali materi kosong)
+        $is_previous_completed = true;
 
         foreach ($courses as $course) {
-            // Hitung Materi & Progress
             $materials = Material::where('course_id', $course->id)->orderBy('urutan', 'asc')->get();
             $total_materi = $materials->count();
             $selesai_count = 0;
@@ -545,30 +589,22 @@ class LearningController extends Controller
                 else if (!$found_next) { $next_urutan = $m->urutan; $found_next = true; }
             }
 
-            // Hitung Persentase
             $course->persen = $total_materi > 0 ? round(($selesai_count / $total_materi) * 100) : 0;
             $course->next_urutan = $next_urutan;
             $course->total_materi = $total_materi;
 
-            // [FIX 2] LOGIKA LOCK / PENGUNCIAN YANG LEBIH KETAT
             if ($total_materi == 0) {
-                // KASUS A: Materi Kosong -> KUNCI MUTLAK
                 $course->status_akses = 'empty'; 
                 $course->pesan_kunci = 'Materi belum diinput oleh Dosen.';
             } 
             elseif (!$is_previous_completed) {
-                // KASUS B: MK Sebelumnya Belum 100% -> KUNCI
                 $course->status_akses = 'locked';
                 $course->pesan_kunci = 'Selesaikan mata kuliah sebelumnya.';
             } 
             else {
-                // KASUS C: Aman -> BUKA
                 $course->status_akses = 'open';
             }
 
-            // Update status untuk iterasi MK berikutnya
-            // MK berikutnya hanya boleh terbuka jika MK saat ini sudah 100%
-            // DAN MK saat ini tidak kosong materinya.
             if ($total_materi > 0 && $course->persen == 100) {
                 $is_previous_completed = true;
             } else {
@@ -581,11 +617,8 @@ class LearningController extends Controller
 
     public function belajar($course_id, $urutan = 1) {
         $user_id = Session::get('user_id');
-        
-        // Eager load 'course' untuk tombol kembali
         $materi = Material::with('course')->where('course_id', $course_id)->where('urutan', $urutan)->firstOrFail();
         
-        // Logika Prasyarat Materi
         if ($urutan > 1) {
             $prev = Material::where('course_id', $course_id)->where('urutan', $urutan - 1)->first();
             if ($prev && !Progress::where('user_id', $user_id)->where('material_id', $prev->id)->exists()) {
@@ -654,13 +687,20 @@ class LearningController extends Controller
 
     public function storeAssignment(Request $request) {
         $user_id = Session::get('user_id');
-        $path = $request->file_tugas;
-        if ($request->hasFile('file_tugas')) { $file = $request->file('file_tugas'); $filename = time() . '_' . $user_id . '_' . $file->getClientOriginalName(); $file->move(public_path('uploads/submissions'), $filename); $path = $filename; }
+        $path = $request->file_tugas; // Jika link (GitHub)
+        
+        if ($request->hasFile('file_tugas')) { 
+            $file = $request->file('file_tugas'); 
+            $filename = time() . '_' . $user_id . '_' . $file->getClientOriginalName(); 
+            // [UPDATED] Store to 'submissions'
+            $file->storeAs('submissions', $filename, 'public');
+            $path = $filename;
+        }
+        
         Submission::create(['user_id' => $user_id, 'material_id' => $request->material_id, 'file_path' => $path, 'nilai' => 0]);
         return back()->with('success', 'Tugas dikirim!');
     }
 
-    // --- FITUR TAMBAHAN (Chat AI, Profil, Dosen) ---
     public function askAi(Request $request) {
         $pesan = $request->input('message'); $apiKey = env('GEMINI_API_KEY');
         $prompt = "Role: Asisten Gaul Jaksel. User: $pesan";
@@ -674,11 +714,32 @@ class LearningController extends Controller
     }
 
     public function editProfile() { $user = User::find(Session::get('user_id')); return view('user.profil', compact('user')); }
+    
     public function updateProfile(Request $request) { 
-        $user = User::find(Session::get('user_id')); $user->nama_lengkap = $request->nama_lengkap; Session::put('nama', $request->nama_lengkap); 
-        if($request->hasFile('foto')) { $file = $request->file('foto'); $filename = time().'_'.$file->getClientOriginalName(); $file->move(public_path('images'), $filename); $user->foto_profil = $filename; Session::put('foto', $filename); } 
-        if($request->filled('password')) { $user->password = md5($request->password); } $user->save(); return back()->with('success', 'Profil update'); 
+        $user = User::find(Session::get('user_id')); 
+        $user->nama_lengkap = $request->nama_lengkap; 
+        Session::put('nama', $request->nama_lengkap); 
+        
+        if($request->hasFile('foto')) { 
+            // [UPDATED] Delete old profile if not default
+            if ($user->foto_profil && $user->foto_profil != 'default.png') {
+                Storage::disk('public')->delete('profiles/' . $user->foto_profil);
+            }
+
+            $file = $request->file('foto'); 
+            $filename = time().'_'.$file->getClientOriginalName(); 
+            // [UPDATED] Store new
+            $file->storeAs('profiles', $filename, 'public'); 
+            
+            $user->foto_profil = $filename; 
+            Session::put('foto', $filename); 
+        } 
+        
+        if($request->filled('password')) { $user->password = md5($request->password); } 
+        $user->save(); 
+        return back()->with('success', 'Profil update'); 
     }
+
     public function bantuan() { return view('user.bantuan'); }
     public function diskusi() { return view('user.diskusi'); }
     public function storeDiscussion(Request $request) { $diskusi = Discussion::create(['course_id' => $request->course_id, 'material_id' => $request->material_id, 'user_id' => Session::get('user_id'), 'message' => $request->message, 'parent_id' => $request->parent_id]); if ($request->parent_id) { $parent = Discussion::find($request->parent_id); if ($parent && $parent->user_id != Session::get('user_id')) { Notification::create(['user_id' => $parent->user_id, 'sender_id' => Session::get('user_id'), 'material_id' => $request->material_id, 'course_id' => $request->course_id, 'message' => "Membalas komentar Anda.", 'is_read' => 0]); } } $diskusi->load('user'); return response()->json(['status' => 'success', 'data' => ['id' => $diskusi->id, 'nama' => $diskusi->user->nama_lengkap, 'role' => $diskusi->user->role, 'foto' => $diskusi->user->foto_profil, 'isi' => $diskusi->message]]); }
@@ -686,4 +747,163 @@ class LearningController extends Controller
     public function readNotification($id) { $notif = Notification::findOrFail($id); $notif->update(['is_read' => 1]); $materi = Material::find($notif->material_id); return redirect('/belajar/' . $notif->course_id . '/' . $materi->urutan . '?tab=diskusi'); }
     public function dosenResetMateri($course_id) { $materials = Material::where('course_id', $course_id)->get(); if ($materials->isEmpty()) return back()->with('error', 'Materi kosong.'); $data = $materials->map(function($m) { return ['id' => $m->id, 'judul' => $m->judul_materi]; }); $prompt = "Urutkan Materi Bab ini secara step-by-step logis. Return JSON Array of IDs saja."; $sortedIDs = $this->askGeminiJSON($prompt, $data); if ($sortedIDs && is_array($sortedIDs)) { foreach ($sortedIDs as $index => $id) { Material::where('id', $id)->update(['urutan' => $index + 1]); } return back()->with('success', 'Materi berhasil di-reset!'); } return back()->with('error', 'Gagal generate materi.'); }
     public function dosenUpdateMateri($course_id) { $existing = Material::where('course_id', $course_id)->where('urutan', '>', 0)->orderBy('urutan', 'asc')->get(['id', 'judul_materi']); $newMaterials = Material::where('course_id', $course_id)->where(function($q) { $q->where('urutan', 0)->orWhereNull('urutan'); })->get(['id', 'judul_materi', 'deskripsi_materi']); if ($newMaterials->isEmpty()) return back()->with('error', 'Tidak ada materi baru.'); foreach ($newMaterials as $newMat) { $prompt = "List Materi: " . $existing->pluck('judul_materi', 'id') . ". Baru: '{$newMat->judul_materi}'. Tentukan ID Prerequisite-nya? Return JSON: {'insert_after_id': ID} (0 jika awal)."; $result = $this->askGeminiJSON($prompt, []); $targetId = $result['insert_after_id'] ?? null; if ($targetId !== null) { $targetUrutan = 0; if ($targetId != 0) { $ref = Material::find($targetId); if ($ref) $targetUrutan = $ref->urutan; } Material::where('course_id', $course_id)->where('urutan', '>', $targetUrutan)->increment('urutan'); $newMat->urutan = $targetUrutan + 1; $newMat->save(); $existing = Material::where('course_id', $course_id)->where('urutan', '>', 0)->orderBy('urutan', 'asc')->get(); } } return back()->with('success', 'Materi baru berhasil disisipkan!'); }
+
+    // ==========================================================
+    // BAGIAN 6: FITUR DOSEN (UPDATED)
+    // ==========================================================
+
+    public function dosenDashboard() {
+        $id = Session::get('user_id');
+        $total_kelas = Course::where('dosen_id', $id)->count();
+        $total_mhs = DB::table('progress')
+            ->join('materials', 'progress.material_id', '=', 'materials.id')
+            ->join('courses', 'materials.course_id', '=', 'courses.id')
+            ->where('courses.dosen_id', $id)
+            ->distinct('progress.user_id')
+            ->count('progress.user_id');
+        $total_tugas = DB::table('submissions')
+            ->join('materials', 'submissions.material_id', '=', 'materials.id')
+            ->join('courses', 'materials.course_id', '=', 'courses.id')
+            ->where('courses.dosen_id', $id)
+            ->count();
+        $kelas_list = Course::withCount('materials')->where('dosen_id', $id)->get();
+        return view('dosen.dashboard', compact('total_kelas', 'total_mhs', 'total_tugas', 'kelas_list'));
+    }
+
+    public function dosenKelasIndex() {
+        $id = Session::get('user_id');
+        $courses = Course::with(['concentrations', 'materials'])->where('dosen_id', $id)->get();
+        return view('dosen.index', compact('courses'));
+    }
+
+    public function dosenKelasDetail($id) {
+        $dosen_id = Session::get('user_id');
+        $course = Course::where('id', $id)->where('dosen_id', $dosen_id)->firstOrFail();
+        $materials = Material::where('course_id', $id)->where('urutan', '>', 0)->orderBy('urutan', 'asc')->get();
+        $new_materials = Material::where('course_id', $id)->where('urutan', 0)->get();
+        $student_ids = Progress::whereIn('material_id', $materials->pluck('id'))->pluck('user_id')->unique();
+        $students = User::whereIn('id', $student_ids)->get();
+        $discussions = Discussion::whereIn('material_id', $materials->pluck('id'))->with(['user', 'material'])->orderBy('created_at', 'desc')->get();
+        return view('dosen.detail_kelas', compact('course', 'materials', 'new_materials', 'students', 'discussions'));
+    }
+
+    public function dosenMateriStore(Request $request) {
+        $request->validate([
+            'judul_materi' => 'required',
+            'course_id' => 'required',
+            'kategori' => 'required'
+        ]);
+
+        $filename = null;
+        if ($request->hasFile('file_lampiran')) {
+            $file = $request->file('file_lampiran');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            // [UPDATED] Store to 'materials'
+            $file->storeAs('materials', $filename, 'public');
+        }
+
+        Material::create([
+            'course_id' => $request->course_id,
+            'judul_materi' => $request->judul_materi,
+            'deskripsi_materi' => $request->deskripsi_materi,
+            'kategori' => $request->kategori,
+            'tipe_submission' => $request->tipe_submission ?? 'none',
+            'video_url' => $request->video_url,
+            'file_lampiran' => $filename,
+            'urutan' => 0 
+        ]);
+
+        return back()->with('success', 'Materi ditambahkan! Silakan gunakan fitur AI Insert untuk menyisipkannya.');
+    }
+
+    public function dosenMateriUpdate(Request $request, $id) {
+        $m = Material::findOrFail($id);
+        
+        if ($request->hasFile('file_lampiran')) {
+            // [UPDATED] Delete Old
+            if ($m->file_lampiran) {
+                Storage::disk('public')->delete('materials/' . $m->file_lampiran);
+            }
+            $file = $request->file('file_lampiran');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            // [UPDATED] Store New
+            $file->storeAs('materials', $filename, 'public');
+            $m->file_lampiran = $filename;
+        }
+
+        $m->judul_materi = $request->judul_materi;
+        $m->deskripsi_materi = $request->deskripsi_materi;
+        $m->video_url = $request->video_url;
+        $m->tipe_submission = $request->tipe_submission;
+        $m->save();
+
+        return back()->with('success', 'Materi berhasil diperbarui.');
+    }
+
+    public function dosenPreviewMateri($course_id, $urutan) {
+        $course = Course::findOrFail($course_id);
+        $materi = Material::where('course_id', $course_id)->where('urutan', $urutan)->firstOrFail();
+        $all_materials = Material::where('course_id', $course_id)->orderBy('urutan')->get();
+
+        return view('user.materi', [
+            'course' => $course,
+            'materi' => $materi,
+            'all_materials' => $all_materials,
+            'is_preview_mode' => true 
+        ]);
+    }
+
+    public function dosenMateriDestroy($id) {
+        $m = Material::findOrFail($id);
+        
+        // [UPDATED] Hapus file Storage
+        if ($m->file_lampiran) {
+            Storage::disk('public')->delete('materials/' . $m->file_lampiran);
+        }
+
+        QuizQuestion::where('material_id', $id)->delete();
+        Progress::where('material_id', $id)->delete();
+        Submission::where('material_id', $id)->delete();
+        Discussion::where('material_id', $id)->delete(); 
+        
+        $m->delete();
+        return back()->with('success', 'Materi berhasil dihapus.');
+    }
+
+    public function dosenSoalStore(Request $request) {
+        QuizQuestion::create($request->all());
+        return back()->with('success', 'Soal berhasil ditambahkan.');
+    }
+
+    public function dosenSoalDestroy($id) {
+        QuizQuestion::findOrFail($id)->delete();
+        return back()->with('success', 'Soal dihapus.');
+    }
+
+    public function dosenKickStudent(Request $request) {
+        $material_ids = Material::where('course_id', $request->course_id)->pluck('id');
+        
+        Progress::where('user_id', $request->user_id)->whereIn('material_id', $material_ids)->delete();
+        Submission::where('user_id', $request->user_id)->whereIn('material_id', $material_ids)->delete();
+        QuizScore::where('user_id', $request->user_id)->whereIn('material_id', $material_ids)->delete();
+
+        return back()->with('success', 'Mahasiswa berhasil dikeluarkan (Reset Progress).');
+    }
+
+    public function dosenUpdateNilai(Request $request, $id) {
+        $sub = Submission::findOrFail($id);
+        $sub->nilai = $request->nilai;
+        $sub->save();
+        
+        Notification::create([
+            'user_id' => $sub->user_id,
+            'sender_id' => Session::get('user_id'),
+            'material_id' => $sub->material_id,
+            'course_id' => $sub->material->course_id,
+            'message' => "Tugas Anda telah dinilai: " . $request->nilai,
+            'is_read' => 0
+        ]);
+
+        return back()->with('success', 'Nilai berhasil disimpan.');
+    }
 }

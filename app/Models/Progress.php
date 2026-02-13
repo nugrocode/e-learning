@@ -9,7 +9,7 @@ class Progress extends Model
     protected $table = 'progress';
     public $timestamps = false; // Karena tabelmu tidak ada created_at/updated_at default
 
-    protected $fillable = ['user_id', 'material_id', 'status'];
+    protected $fillable = ['user_id', 'material_id', 'status', 'tanggal_selesai'];
 
     // --- TAMBAHKAN INI ---
     public function material()

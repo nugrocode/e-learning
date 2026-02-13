@@ -2,30 +2,32 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Discussion extends Model
 {
-    protected $table = 'discussions';
-    public $timestamps = true;
+    use HasFactory;
 
-    protected $fillable = [
-        'parent_id', // <--- TAMBAHAN BARU
-        'course_id',
-        'material_id',
-        'user_id',
-        'message'
-    ];
+    // Izinkan semua kolom diisi (mass assignment)
+    protected $guarded = ['id'];
 
-    // Relasi ke User
+    // 1. Relasi ke User (Siapa yang berkomentar?)
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Relasi: Komentar ini punya banyak balasan (Anak)
+    // 2. Relasi ke Material (Komentar ini ada di materi mana?)
+    // INI YANG TADI MENYEBABKAN ERROR
+    public function material()
+    {
+        return $this->belongsTo(Material::class, 'material_id');
+    }
+
+    // 3. Relasi Balasan (Opsional: Jika nanti mau fitur Reply bertingkat)
     public function replies()
     {
-        return $this->hasMany(Discussion::class, 'parent_id')->orderBy('created_at', 'asc');
+        return $this->hasMany(Discussion::class, 'parent_id');
     }
 }

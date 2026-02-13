@@ -10,7 +10,7 @@ class User extends Authenticatable
     use Notifiable;
 
     protected $table = 'users';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'nim_nidn',
