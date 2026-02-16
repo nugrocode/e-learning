@@ -4,7 +4,7 @@
 
 @section('content')
 
-    {{-- 1. HEADER KELAS (Ringkas) --}}
+    {{-- 1. HEADER KELAS (Ringkas & Statistik) --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-4 relative overflow-hidden">
         <div class="d-flex justify-content-between align-items-center relative z-10">
             <div>
@@ -21,16 +21,16 @@
                 </div>
             </div>
             
-            {{-- Tombol Utama --}}
+            {{-- Tombol Tambah Materi --}}
             <button class="btn btn-dark rounded-lg font-bold shadow-md px-4 py-2" data-bs-toggle="modal" data-bs-target="#modalTambahMateri">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Materi
             </button>
         </div>
-        {{-- Dekorasi Background Halus --}}
+        {{-- Dekorasi Background --}}
         <div class="absolute right-0 top-0 w-64 h-64 bg-gray-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2"></div>
     </div>
 
-    {{-- 2. LIST MATERI (LANGSUNG TAMPIL TANPA TAB) --}}
+    {{-- 2. LIST MATERI --}}
     @if($materials->isEmpty())
         <div class="text-center py-5 bg-white rounded-xl border border-dashed border-gray-300">
             <div class="mb-3 bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-gray-300">
@@ -42,24 +42,24 @@
     @else
         <div class="d-flex flex-column gap-3">
             @foreach($materials as $m)
+                {{-- ITEM MATERI --}}
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition group">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="d-flex gap-3">
-                            {{-- Icon Tipe Konten --}}
+                            {{-- Icon --}}
                             <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 {{ $m->kategori == 'quiz' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600' }}">
                                 <i class="bi {{ $m->kategori == 'quiz' ? 'bi-puzzle-fill' : 'bi-play-fill' }} text-2xl"></i>
                             </div>
                             
-                            {{-- Detail Materi --}}
+                            {{-- Detail --}}
                             <div>
                                 <div class="d-flex align-items-center gap-2 mb-1">
                                     <span class="badge bg-gray-100 text-gray-500 text-[10px] border border-gray-200">#{{ $m->urutan }}</span>
                                     <h6 class="font-bold text-gray-800 mb-0">{{ $m->judul_materi }}</h6>
                                 </div>
-                                
                                 <p class="text-xs text-gray-500 line-clamp-1 mb-2">{{ $m->deskripsi_materi }}</p>
                                 
-                                {{-- Badges Info --}}
+                                {{-- Badges --}}
                                 <div class="d-flex gap-2">
                                     @if($m->video_url)
                                         <a href="{{ $m->video_url }}" target="_blank" class="badge bg-red-50 text-red-600 border border-red-100 text-[10px] no-underline hover:bg-red-100">
@@ -106,8 +106,67 @@
                     </div>
                 </div>
 
-                {{-- MODAL EDIT MATERI (Include Form Edit) --}}
-                @include('dosen.modal_edit_materi', ['m' => $m])
+                {{-- MODAL EDIT MATERI (LANGSUNG DISINI) --}}
+                <div class="modal fade" id="modalEditMateri{{ $m->id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form action="{{ url('/dosen/materi/'.$m->id) }}" method="POST" enctype="multipart/form-data" class="modal-content rounded-xl border-0 shadow-lg">
+                            @csrf @method('PUT')
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title font-bold">Edit Materi</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label text-xs font-bold uppercase text-gray-500">Judul</label>
+                                    <input type="text" name="judul_materi" class="form-control" value="{{ $m->judul_materi }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-xs font-bold uppercase text-gray-500">Deskripsi</label>
+                                    <textarea name="deskripsi_materi" class="form-control" rows="2">{{ $m->deskripsi_materi }}</textarea>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label text-xs font-bold uppercase text-gray-500">Tipe Konten</label>
+                                        <select name="kategori" class="form-select">
+                                            <option value="video" {{ $m->kategori == 'video' ? 'selected' : '' }}>Video Materi</option>
+                                            <option value="quiz" {{ $m->kategori == 'quiz' ? 'selected' : '' }}>Kuis / Latihan</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-xs font-bold uppercase text-gray-500">Tugas</label>
+                                        <select name="tipe_submission" id="tipe_sub_edit_{{ $m->id }}" class="form-select" onchange="toggleDriveEdit('{{ $m->id }}')">
+                                            <option value="none" {{ $m->tipe_submission == 'none' ? 'selected' : '' }}>Tidak Ada</option>
+                                            <option value="file" {{ $m->tipe_submission == 'file' ? 'selected' : '' }}>Upload File</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {{-- INPUT DRIVE (Muncul jika tipe=file) --}}
+                                <div class="mb-3" id="drive_input_edit_{{ $m->id }}" style="{{ $m->tipe_submission == 'file' ? 'display:block' : 'display:none' }}">
+                                    <label class="form-label text-xs font-bold uppercase text-blue-600">
+                                        <i class="bi bi-google-drive"></i> Link Folder G-Drive
+                                    </label>
+                                    <input type="url" name="link_drive" class="form-control bg-blue-50 border-blue-200" value="{{ $m->link_drive }}" placeholder="Link folder GDrive...">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-xs font-bold uppercase text-gray-500">Link YouTube</label>
+                                    <input type="url" name="video_url" class="form-control" value="{{ $m->video_url }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-xs font-bold uppercase text-gray-500">File Lampiran (Opsional)</label>
+                                    <input type="file" name="file_lampiran" class="form-control">
+                                    <small class="text-xs text-gray-400">Biarkan kosong jika tidak ingin mengubah file.</small>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="submit" class="btn btn-primary w-100 font-bold">Simpan Perubahan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
             @endforeach
         </div>
     @endif
@@ -142,7 +201,7 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label text-xs font-bold uppercase text-gray-500">Tugas (Submission)</label>
-                            <select name="tipe_submission" id="tipe_submission_add" class="form-select" onchange="toggleDriveInput('add')">
+                            <select name="tipe_submission" id="tipe_submission_add" class="form-select" onchange="toggleDriveAdd()">
                                 <option value="none">Tidak Ada</option>
                                 <option value="file">Upload File</option>
                             </select>
@@ -177,17 +236,18 @@
 
 @push('scripts')
 <script>
-    function toggleDriveInput(mode) {
-        // Mode 'add' untuk modal tambah, nanti bisa buat mode 'edit' juga
-        let selectId = mode === 'add' ? 'tipe_submission_add' : 'tipe_submission_edit';
-        let divId = mode === 'add' ? 'drive_input_add' : 'drive_input_edit';
-        
-        let tipe = document.getElementById(selectId).value;
-        let container = document.getElementById(divId);
-        
-        if (container) {
-            container.style.display = (tipe === 'file') ? 'block' : 'none';
-        }
+    // Toggle untuk Modal Tambah
+    function toggleDriveAdd() {
+        let tipe = document.getElementById('tipe_submission_add').value;
+        let container = document.getElementById('drive_input_add');
+        container.style.display = (tipe === 'file') ? 'block' : 'none';
+    }
+
+    // Toggle untuk Modal Edit (Per Item)
+    function toggleDriveEdit(id) {
+        let val = document.getElementById('tipe_sub_edit_' + id).value;
+        let div = document.getElementById('drive_input_edit_' + id);
+        div.style.display = (val === 'file') ? 'block' : 'none';
     }
 </script>
 @endpush

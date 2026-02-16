@@ -3,131 +3,202 @@
 @section('title', 'Dashboard Dosen')
 
 @section('content')
-    {{-- 1. WELCOME BANNER --}}
-    <div class="bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl p-6 text-white shadow-lg mb-5 relative overflow-hidden animate-fade-in-up">
-        <div class="relative z-10">
-            <h2 class="font-bold text-2xl md:text-3xl mb-1">Selamat Datang, {{ session('nama') }}! 👋</h2>
-            <p class="text-blue-100 text-sm md:text-base opacity-90">
-                Panel Kontrol Akademik: Pantau perkembangan kelas dan nilai mahasiswa Anda di sini.
-            </p>
+    {{-- BAGIAN 1: HEADER & SAMBUTAN --}}
+    <div class="row mb-4 animate-fade-in-up">
+        <div class="col-12">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 d-flex flex-column flex-md-row justify-content-between align-items-center gap-4 relative overflow-hidden">
+                
+                {{-- Teks Sambutan --}}
+                <div class="z-10 relative">
+                    <h1 class="font-bold text-2xl text-gray-800 mb-1">
+                        Halo, {{ session('nama') }}! <span class="text-2xl">👋</span>
+                    </h1>
+                    <p class="text-gray-500 text-sm mb-0">
+                        Siap mengajar hari ini? Ada <strong class="text-blue-600">{{ $total_kelas }} Kelas</strong> yang menunggu aktivitas Anda.
+                    </p>
+                </div>
+
+                {{-- Quick Actions (Tombol Cepat) --}}
+                <div class="d-flex gap-2 z-10 relative">
+                    <a href="{{ url('/dosen/kelas') }}" class="btn btn-outline-secondary btn-sm rounded-lg fw-bold px-3 shadow-sm bg-white">
+                        <i class="bi bi-journal-bookmark me-1"></i> Lihat Kelas
+                    </a>
+                    <a href="{{ url('/dosen/materi') }}" class="btn btn-primary btn-sm rounded-lg fw-bold px-3 shadow-sm bg-blue-600 border-0">
+                        <i class="bi bi-plus-lg me-1"></i> Susun Materi Baru
+                    </a>
+                </div>
+
+                {{-- Dekorasi Background Abstrak --}}
+                <div class="absolute right-0 top-0 h-full w-48 bg-gradient-to-l from-blue-50 to-transparent opacity-50 rounded-r-xl"></div>
+                <div class="absolute -right-6 -bottom-8 text-9xl text-blue-100 opacity-20 transform rotate-12">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+            </div>
         </div>
-        {{-- Hiasan Background --}}
-        <i class="bi bi-person-video3 absolute -right-6 -bottom-6 text-9xl text-white opacity-10 transform rotate-12"></i>
     </div>
 
-    {{-- 2. STATISTIK CARDS --}}
+    {{-- BAGIAN 2: STATISTIK UTAMA (Cards) --}}
     <div class="row g-4 mb-5">
         
-        {{-- Card 1: Total Kelas --}}
+        {{-- Card 1: Total Mahasiswa --}}
         <div class="col-12 col-md-4">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-100 d-flex align-items-center gap-4 hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-2xl flex-shrink-0">
-                    <i class="bi bi-easel2-fill"></i>
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm h-100 hover:shadow-md transition-all duration-300 group">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <i class="bi bi-people-fill text-lg"></i>
+                    </div>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Total Mahasiswa</span>
                 </div>
-                <div>
-                    <h3 class="font-bold text-2xl text-gray-800 m-0 leading-none">{{ $total_kelas }}</h3>
-                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wide m-0 mt-1">Kelas Diampu</p>
+                <div class="d-flex align-items-end justify-content-between">
+                    <h3 class="font-bold text-3xl text-gray-800 m-0">{{ $total_mhs }}</h3>
+                    <span class="text-[10px] text-green-500 bg-green-50 px-2 py-1 rounded-full font-bold">
+                        <i class="bi bi-arrow-up-short"></i> Aktif
+                    </span>
                 </div>
             </div>
         </div>
 
-        {{-- Card 2: Total Mahasiswa (Aktif) --}}
+        {{-- Card 2: Tugas Belum Dinilai (PENTING) --}}
         <div class="col-12 col-md-4">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-100 d-flex align-items-center gap-4 hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-2xl flex-shrink-0">
-                    <i class="bi bi-people-fill"></i>
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm h-100 hover:shadow-md transition-all duration-300 group cursor-pointer" onclick="window.location='{{ url('/dosen/tugas') }}'">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                        <i class="bi bi-pencil-square text-lg"></i>
+                    </div>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Tugas Masuk</span>
                 </div>
-                <div>
-                    <h3 class="font-bold text-2xl text-gray-800 m-0 leading-none">{{ $total_mhs }}</h3>
-                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wide m-0 mt-1">Mahasiswa Aktif</p>
+                <div class="d-flex align-items-end justify-content-between">
+                    <h3 class="font-bold text-3xl text-gray-800 m-0">{{ $total_tugas }}</h3>
+                    @if($total_tugas > 0)
+                        <span class="text-[10px] text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-bold animate-pulse">
+                            Perlu Dinilai
+                        </span>
+                    @else
+                        <span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-full font-bold">
+                            Semua Beres
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
 
-        {{-- Card 3: Tugas Masuk --}}
+        {{-- Card 3: Total Materi --}}
         <div class="col-12 col-md-4">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 h-100 d-flex align-items-center gap-4 hover:shadow-md transition">
-                <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-2xl flex-shrink-0">
-                    <i class="bi bi-file-earmark-check-fill"></i>
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm h-100 hover:shadow-md transition-all duration-300 group">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                        <i class="bi bi-collection-play-fill text-lg"></i>
+                    </div>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Bank Materi</span>
                 </div>
-                <div>
-                    <h3 class="font-bold text-2xl text-gray-800 m-0 leading-none">{{ $total_tugas }}</h3>
-                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wide m-0 mt-1">Total Tugas Masuk</p>
+                <div class="d-flex align-items-end justify-content-between">
+                    {{-- Asumsi $total_materi dihitung di controller --}}
+                    <h3 class="font-bold text-3xl text-gray-800 m-0">{{ $total_materi ?? 0 }}</h3>
+                    <span class="text-[10px] text-purple-500 bg-purple-50 px-2 py-1 rounded-full font-bold">
+                        Modul & Video
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- 3. DAFTAR KELAS (GRID VIEW) --}}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="font-bold text-gray-800 text-lg m-0 border-l-4 border-yellow-400 ps-3">Kelas Ajar Anda</h5>
-        <a href="{{ url('/dosen/kelas') }}" class="btn btn-sm btn-outline-dark rounded-pill px-3 text-xs font-bold">
-            Lihat Semua <i class="bi bi-arrow-right ms-1"></i>
+    {{-- BAGIAN 3: OVERVIEW KELAS (Grid Modern) --}}
+    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+        <div>
+            <h5 class="font-bold text-gray-800 m-0">Kelas Ajar Anda</h5>
+            <p class="text-xs text-gray-500 m-0 mt-1">Kelola materi dan pantau mahasiswa per kelas.</p>
+        </div>
+        <a href="{{ url('/dosen/kelas') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 text-decoration-none transition">
+            Lihat Semua <i class="bi bi-arrow-right"></i>
         </a>
     </div>
 
     <div class="row g-4">
-        @forelse($kelas_list as $k)
+        @forelse($kelas_list->take(3) as $k) {{-- Tampilkan 3 kelas terbaru saja agar dashboard rapi --}}
             @php
-                // Logika Warna Card Acak agar tidak bosan
-                $colors = ['border-l-blue-500', 'border-l-purple-500', 'border-l-teal-500', 'border-l-indigo-500'];
-                $border_color = $colors[$k->id % count($colors)];
-                
-                // Hitung Kelengkapan Materi (Misal target 1 semester 14 pertemuan)
-                $persen_materi = min(($k->materials_count / 14) * 100, 100);
+                $progress = min(($k->materials_count / 14) * 100, 100); // Asumsi 14 pertemuan
+                $colors = ['blue', 'indigo', 'teal', 'purple'];
+                $color = $colors[$k->id % 4]; // Rotasi warna
             @endphp
 
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="{{ url('/dosen/kelas/'.$k->id) }}" class="text-decoration-none group">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 h-100 d-flex flex-column border-l-4 {{ $border_color }}">
-                        
-                        {{-- Header Card --}}
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            {{-- Badge Konsentrasi --}}
-                            <span class="badge bg-gray-100 text-gray-600 rounded-lg text-[10px] border border-gray-200 px-2 py-1">
-                                <i class="bi bi-diagram-3-fill me-1"></i> 
-                                {{ $k->concentrations->first()->nama_konsentrasi ?? 'Mata Kuliah Umum' }}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-100 d-flex flex-column hover:-translate-y-1 transition-transform duration-300 relative group">
+                    
+                    {{-- Garis Indikator Warna di Kiri --}}
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-{{ $color }}-500"></div>
+
+                    <div class="p-4 flex-grow-1">
+                        {{-- Header Kelas --}}
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-{{ $color }}-50 text-{{ $color }}-600 border border-{{ $color }}-100 rounded-lg px-2 py-1 text-[10px]">
+                                {{ $k->concentrations->first()->nama_konsentrasi ?? 'Umum' }}
                             </span>
-                            
-                            {{-- Icon Arrow --}}
-                            <div class="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-600 group-hover:text-white transition">
-                                <i class="bi bi-chevron-right text-xs"></i>
+                            <div class="dropdown">
+                                <button class="btn btn-link text-gray-400 p-0" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 text-sm">
+                                    <li><a class="dropdown-item py-2" href="{{ url('/dosen/kelas/'.$k->id) }}"><i class="bi bi-gear me-2"></i> Kelola Kelas</a></li>
+                                    <li><a class="dropdown-item py-2" href="{{ url('/dosen/mahasiswa?kelas='.$k->id) }}"><i class="bi bi-people me-2"></i> Lihat Mahasiswa</a></li>
+                                </ul>
                             </div>
                         </div>
 
-                        {{-- Judul & Deskripsi --}}
-                        <h6 class="font-bold text-gray-800 text-base mb-1 line-clamp-1 group-hover:text-blue-700 transition">
-                            {{ $k->nama_mk }}
-                        </h6>
-                        <p class="text-xs text-gray-500 mb-4 line-clamp-2 leading-relaxed flex-grow-1">
-                            {{ $k->deskripsi ?? 'Belum ada deskripsi untuk mata kuliah ini.' }}
+                        {{-- Judul Kelas --}}
+                        <h5 class="font-bold text-gray-800 text-lg mb-1 group-hover:text-{{ $color }}-600 transition-colors">
+                            <a href="{{ url('/dosen/kelas/'.$k->id) }}" class="text-decoration-none text-reset stretched-link">
+                                {{ $k->nama_mk }}
+                            </a>
+                        </h5>
+                        <p class="text-xs text-gray-500 line-clamp-2 mb-4">
+                            {{ $k->deskripsi ?? 'Tidak ada deskripsi singkat.' }}
                         </p>
-                        
-                        {{-- Footer: Mini Statistik --}}
-                        <div class="mt-auto pt-3 border-t border-gray-50 bg-gray-50/50 -mx-4 -mb-4 p-3 rounded-b-xl">
-                            <div class="d-flex justify-content-between text-[10px] text-gray-500 mb-1 font-semibold uppercase">
-                                <span>Konten Materi</span>
-                                <span>{{ $k->materials_count }} Item</span>
+
+                        {{-- Statistik Mini --}}
+                        <div class="d-flex gap-3 border-t border-dashed pt-3">
+                            <div class="d-flex align-items-center gap-1 text-xs text-gray-500">
+                                <i class="bi bi-file-earmark-text text-{{ $color }}-500"></i>
+                                <span class="font-bold text-gray-700">{{ $k->materials_count }}</span> Materi
                             </div>
-                            <div class="progress h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div class="progress-bar bg-blue-600 rounded-full" role="progressbar" style="width: {{ $persen_materi }}%"></div>
-                            </div>
-                            <div class="mt-2 text-[10px] text-gray-400 text-end">
-                                Klik untuk kelola <i class="bi bi-hand-index-thumb"></i>
+                            <div class="d-flex align-items-center gap-1 text-xs text-gray-500">
+                                <i class="bi bi-person text-{{ $color }}-500"></i>
+                                <span class="font-bold text-gray-700">{{ $k->students_count ?? 0 }}</span> Mhs
                             </div>
                         </div>
-
                     </div>
-                </a>
+
+                    {{-- Progress Bar Bawah --}}
+                    <div class="bg-gray-50 px-4 py-2 border-top border-gray-100">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="text-[10px] text-gray-400 fw-bold">KELENGKAPAN MATERI</span>
+                            <span class="text-[10px] text-{{ $color }}-600 fw-bold">{{ round($progress) }}%</span>
+                        </div>
+                        <div class="progress h-1.5 bg-gray-200 rounded-full w-100">
+                            <div class="progress-bar bg-{{ $color }}-500 rounded-full" role="progressbar" style="width: {{ $progress }}%"></div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         @empty
-            <div class="col-12 py-5 text-center">
-                <div class="d-inline-block p-4 rounded-full bg-gray-50 mb-3 border border-dashed border-gray-200">
-                    <i class="bi bi-journal-x text-4xl text-gray-300"></i>
+            <div class="col-12">
+                <div class="text-center py-5 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                    <i class="bi bi-journal-x text-4xl text-gray-300 mb-3 d-block"></i>
+                    <h6 class="text-gray-500 font-bold">Belum Ada Kelas Aktif</h6>
+                    <p class="text-xs text-gray-400 mb-0">Hubungi Admin Akademik untuk plotting jadwal Anda.</p>
                 </div>
-                <h6 class="font-bold text-gray-600">Belum ada Kelas</h6>
-                <p class="text-gray-400 text-sm">Anda belum ditugaskan mengajar kelas manapun.</p>
             </div>
         @endforelse
     </div>
+
+    {{-- Script Animasi Simpel --}}
+    @push('styles')
+    <style>
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    @endpush
 @endsection
