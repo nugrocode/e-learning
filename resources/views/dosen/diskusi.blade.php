@@ -1,153 +1,240 @@
 @extends('layouts.dosen')
 
-@section('title', 'Tanya Jawab Materi')
+@section('title', 'Forum Diskusi')
 
 @section('content')
 
+<style>
+    /* --- CUSTOM CSS FOR CHAT UI --- */
+    .chat-container { display: flex; gap: 12px; margin-bottom: 24px; }
+    
+    /* Avatar Styling */
+    .chat-avatar { 
+        width: 48px; height: 48px; 
+        border-radius: 50%; object-fit: cover; 
+        flex-shrink: 0; 
+        border: 2px solid #fff; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+    }
+
+    /* Bubble Styles */
+    .chat-bubble {
+        position: relative;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        max-width: 85%;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* Student Bubble (Left) */
+    .chat-bubble-student {
+        background-color: #f8f9fa;
+        border: 1px solid #edf2f7;
+        border-top-left-radius: 0;
+        color: #2d3748;
+    }
+
+    /* Dosen Bubble (Right) */
+    .chat-dosen-wrapper { 
+        display: flex; 
+        justify-content: flex-end; 
+        margin-top: 8px;
+        margin-left: auto;
+        gap: 10px;
+    }
+    .chat-bubble-dosen {
+        background-color: #ebf8ff; /* Light Blue Fixed */
+        border: 1px solid #bee3f8;
+        border-top-right-radius: 0;
+        color: #2c5282;
+        text-align: left;
+    }
+
+    /* Typography */
+    .sender-name { 
+        font-size: 0.85rem; 
+        font-weight: 700; 
+        margin-bottom: 4px; 
+        display: flex; /* Fix alignment */
+        align-items: center;
+        gap: 6px;
+        color: #4a5568;
+    }
+    .time-stamp {
+        font-size: 0.7rem;
+        color: #a0aec0;
+        margin-top: 4px;
+        display: block;
+        text-align: right;
+    }
+
+    /* FIX BADGE COLORS MANUAL (Agar tidak tertimpa) */
+    .badge-mk-fix {
+        background-color: #ebf8ff !important; /* Biru Muda */
+        color: #3182ce !important; /* Biru Tua */
+        border: 1px solid #bee3f8;
+    }
+    .badge-role-fix {
+        background-color: #edf2f7 !important; /* Abu Muda */
+        color: #718096 !important; /* Abu Tua */
+        border: 1px solid #e2e8f0;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    /* Mobile Adjustments */
+    @media (max-width: 576px) {
+        .chat-avatar { width: 36px; height: 36px; }
+        .chat-bubble { font-size: 0.85rem; padding: 10px 14px; }
+        .sender-name { font-size: 0.75rem; }
+    }
+</style>
+
+<div class="container-fluid px-0">
+    
     {{-- 1. HEADER HALAMAN --}}
-    <div class="row mb-4 animate-fade-in-up">
-        <div class="col-12 col-md-8">
-            <h2 class="font-bold text-2xl text-gray-800 mb-1">Ruang Diskusi & Tanya Jawab</h2>
-            <p class="text-gray-500 text-sm m-0">Jawab pertanyaan mahasiswa terkait materi pembelajaran di sini.</p>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold text-dark mb-1">Forum Diskusi</h4>
+            <p class="text-muted small m-0">Interaksi tanya jawab materi pembelajaran.</p>
         </div>
-        <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
-             <div class="bg-white px-4 py-2 rounded-lg border shadow-sm d-inline-block text-start min-w-[150px]">
-                <span class="d-block text-xl font-bold text-blue-600">{{ $discussions->count() }}</span>
-                <span class="text-[10px] text-gray-400 uppercase font-bold">Total Utas</span>
-            </div>
+        
+        <div class="d-none d-md-block">
+            <span class="badge bg-white text-dark border shadow-sm py-2 px-3 rounded-pill">
+                <i class="bi bi-chat-dots-fill text-primary me-2"></i> {{ $discussions->count() }} Pertanyaan
+            </span>
         </div>
     </div>
 
-    {{-- 2. FILTER & PENCARIAN --}}
-    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 mb-4">
-        <form action="" method="GET" class="d-flex flex-column flex-md-row gap-3 align-items-center">
-            
-            {{-- Filter Mata Kuliah --}}
-            <div class="input-group w-full md:w-auto flex-grow-1">
-                <span class="input-group-text bg-gray-50 border-end-0 text-gray-400"><i class="bi bi-funnel"></i></span>
-                <select name="course_id" class="form-select border-start-0 bg-gray-50 text-sm focus:ring-0" onchange="this.form.submit()">
-                    <option value="">Semua Mata Kuliah</option>
-                    @foreach($courses as $c)
-                        <option value="{{ $c->id }}" {{ request('course_id') == $c->id ? 'selected' : '' }}>{{ $c->nama_mk }}</option>
-                    @endforeach
-                </select>
-            </div>
-            
-            {{-- Search Bar --}}
-             <div class="input-group w-full md:w-auto flex-grow-1">
-                <input type="text" name="q" class="form-control border-end-0 text-sm ps-3" placeholder="Cari isi pertanyaan atau nama mahasiswa..." value="{{ request('q') }}">
-                <button class="btn btn-light border border-start-0 text-gray-400"><i class="bi bi-search"></i></button>
-            </div>
-
-            {{-- Reset --}}
-            <a href="{{ url('/dosen/diskusi') }}" class="btn btn-light border text-gray-400" title="Reset Filter"><i class="bi bi-arrow-counterclockwise"></i></a>
-        </form>
+    {{-- 2. FILTER SEARCH --}}
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div class="card-body p-2">
+            <form action="" method="GET" class="row g-2 align-items-center">
+                <div class="col-12 col-md-4 border-end-md">
+                    <select name="course_id" class="form-select border-0 shadow-none py-2 text-secondary fw-bold" style="font-size: 0.9rem;" onchange="this.form.submit()">
+                        <option value="">Semua Mata Kuliah</option>
+                        @foreach($courses as $c)
+                            <option value="{{ $c->id }}" {{ request('course_id') == $c->id ? 'selected' : '' }}>{{ $c->nama_mk }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0 text-muted ps-3"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control border-0 shadow-none text-dark" placeholder="Cari pertanyaan mahasiswa..." value="{{ request('q') }}">
+                        <button class="btn btn-primary rounded-pill px-4 ms-2 fw-bold shadow-sm btn-sm my-1">Cari</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
-    {{-- 3. DAFTAR DISKUSI (FORUM STYLE) --}}
+    {{-- 3. LIST DISKUSI --}}
     <div class="d-flex flex-column gap-4">
         @forelse($discussions as $chat)
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                 
-                {{-- A. Header Kartu: Info Materi & Waktu --}}
-                <div class="bg-gray-50 px-4 py-2 border-bottom border-gray-100 d-flex justify-content-between align-items-center">
+                {{-- HEADER KONTEKS (FIX WARNA) --}}
+                <div class="px-4 py-3 bg-light border-bottom d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2 overflow-hidden">
-                        {{-- Badge Mata Kuliah --}}
-                        <span class="badge bg-white text-gray-600 border border-gray-200 rounded text-[10px] fw-bold shadow-sm">
+                        {{-- Badge Mata Kuliah dengan Class Fix --}}
+                        <span class="badge badge-mk-fix rounded-pill px-3 py-1 fw-bold text-uppercase" style="font-size: 0.7rem;">
                             {{ $chat->material->course->nama_mk ?? 'Umum' }}
                         </span>
-                        <i class="bi bi-chevron-right text-gray-300 text-xs"></i>
-                        {{-- Judul Materi --}}
-                        <a href="{{ url('/dosen/materi?q='.$chat->material->judul_materi) }}" class="text-xs font-bold text-blue-600 text-decoration-none hover:underline truncate">
-                            {{ $chat->material->judul_materi ?? 'Materi Dihapus' }}
+                        <i class="bi bi-chevron-right text-muted" style="font-size: 0.7rem;"></i>
+                        <a href="{{ url('/dosen/materi/'.$chat->material->course_id) }}" class="text-dark fw-bold text-decoration-none text-truncate small" style="max-width: 200px;">
+                            {{ $chat->material->judul_materi }}
                         </a>
                     </div>
-                    <small class="text-gray-400 text-[10px] flex-shrink-0 ms-2">
-                        <i class="bi bi-clock me-1"></i> {{ $chat->created_at->diffForHumans() }}
+                    <small class="text-muted fw-medium" style="font-size: 0.75rem;">
+                        {{ $chat->created_at->diffForHumans() }}
                     </small>
                 </div>
 
-                <div class="p-4">
-                    {{-- B. Pertanyaan Mahasiswa --}}
-                    <div class="d-flex gap-3 mb-4">
-                        {{-- Foto Mahasiswa --}}
-                         <img src="{{ $chat->user->foto_profil && $chat->user->foto_profil != 'default.png' ? asset('storage/profiles/' . $chat->user->foto_profil) : asset('images/logo_ukit.png') }}" 
-                             class="w-10 h-10 rounded-full border border-gray-200 object-cover flex-shrink-0 shadow-sm"
-                             onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($chat->user->nama_lengkap) }}'">
+                <div class="card-body p-3 p-md-4">
+                    
+                    {{-- A. PERTANYAAN MAHASISWA (KIRI) --}}
+                    <div class="chat-container">
+                        <img src="{{ $chat->user->foto_profil ? asset('storage/profiles/'.$chat->user->foto_profil) : asset('images/default.png') }}" 
+                             class="chat-avatar" 
+                             onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($chat->user->nama_lengkap) }}&background=random'">
                         
                         <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <h6 class="font-bold text-gray-800 text-sm mb-1">
-                                    {{ $chat->user->nama_lengkap }} 
-                                    <span class="badge bg-gray-100 text-gray-500 border rounded-pill ms-1 text-[9px] font-normal">Mahasiswa</span>
-                                </h6>
+                            <div class="sender-name">
+                                {{ $chat->user->nama_lengkap }} 
+                                {{-- Badge Role dengan Class Fix --}}
+                                <span class="badge-role-fix">Mahasiswa</span>
                             </div>
-                            {{-- Bubble Chat Mahasiswa --}}
-                            <div class="bg-gray-50 p-3 rounded-2xl rounded-tl-none border border-gray-100 text-sm text-gray-700 relative">
-                                {{ $chat->isi }}
+                            <div class="chat-bubble chat-bubble-student">
+                                {!! nl2br(e($chat->message)) !!}
                             </div>
                         </div>
                     </div>
 
-                    {{-- C. Balasan Dosen (Threaded) --}}
+                    {{-- B. BALASAN DOSEN (KANAN) --}}
                     @foreach($chat->replies as $reply)
-                         <div class="d-flex gap-3 mb-3 ms-5 ps-3 border-start border-2 border-gray-100">
-                            <div class="flex-grow-1 text-end">
-                                <h6 class="font-bold text-blue-600 text-sm mb-1">
-                                    Anda <span class="badge bg-blue-100 text-blue-600 border border-blue-200 rounded-pill ms-1 text-[9px]">Dosen</span>
-                                </h6>
-                                {{-- Bubble Chat Dosen --}}
-                                <div class="bg-blue-50 p-3 rounded-2xl rounded-tr-none border border-blue-100 text-sm text-gray-800 text-start d-inline-block shadow-sm">
-                                    {{ $reply->isi }}
+                        <div class="chat-dosen-wrapper w-100 w-md-75">
+                            <div class="d-flex flex-column align-items-end flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    {{-- Tombol Hapus --}}
+                                    <form action="{{ url('/dosen/diskusi/'.$reply->id) }}" method="POST" onsubmit="return confirm('Hapus balasan ini?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-link p-0 text-danger opacity-25 hover:opacity-100 transition" style="font-size: 0.8rem;">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    <span class="sender-name text-primary mb-0">Anda</span>
                                 </div>
-                                <div class="text-[10px] text-gray-400 mt-1 me-1">{{ $reply->created_at->format('d M H:i') }}</div>
+                                
+                                <div class="chat-bubble chat-bubble-dosen">
+                                    {!! nl2br(e($reply->message)) !!}
+                                    <span class="time-stamp">{{ $reply->created_at->format('H:i') }}</span>
+                                </div>
                             </div>
-                            {{-- Foto Dosen --}}
-                            <img src="{{ session('foto') && session('foto') != 'default.png' ? asset('storage/profiles/'.session('foto')) : asset('images/logo_ukit.png') }}" 
-                                 class="w-8 h-8 rounded-full border border-blue-200 object-cover flex-shrink-0"
-                                 onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
+                            
+                            <img src="{{ session('foto') ? asset('storage/profiles/'.session('foto')) : asset('images/default.png') }}" 
+                                 class="chat-avatar ms-1" style="width: 38px; height: 38px;"
+                                 onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(session('nama', 'Dosen')) }}'">
                         </div>
                     @endforeach
 
-                    {{-- D. Form Balas Cepat --}}
-                    <div class="mt-4 pt-3 border-top border-gray-50 ms-0 ms-md-5">
-                        <form action="{{ url('/dosen/proses-diskusi') }}" method="POST" class="d-flex gap-2 align-items-start">
-                            @csrf
-                            <input type="hidden" name="material_id" value="{{ $chat->material_id }}">
-                            <input type="hidden" name="parent_id" value="{{ $chat->id }}">
-                            
-                            {{-- Foto Mini Dosen (Desktop Only) --}}
-                            <img src="{{ session('foto') && session('foto') != 'default.png' ? asset('storage/profiles/'.session('foto')) : asset('images/logo_ukit.png') }}" 
-                                 class="w-8 h-8 rounded-full border object-cover d-none d-md-block opacity-75"
-                                 onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
-                            
-                            <div class="flex-grow-1 relative">
-                                <textarea name="isi" class="form-control text-sm bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-300 focus:ring-4 focus:ring-blue-100 transition rounded-xl py-2" rows="1" placeholder="Tulis balasan untuk mahasiswa ini..." required style="min-height: 42px;"></textarea>
-                                <button type="submit" class="btn btn-primary btn-sm absolute right-2 top-1.5 rounded-lg p-1 px-3 fw-bold text-xs shadow-sm hover:scale-105 transition">
-                                    <i class="bi bi-send-fill"></i> Kirim
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
                 </div>
+
+                {{-- C. FORM BALASAN --}}
+                <div class="card-footer bg-white p-3 border-top">
+                    <form action="{{ url('/dosen/proses-diskusi') }}" method="POST" class="d-flex align-items-end gap-2">
+                        @csrf
+                        <input type="hidden" name="material_id" value="{{ $chat->material_id }}">
+                        <input type="hidden" name="parent_id" value="{{ $chat->id }}">
+                        <input type="hidden" name="course_id" value="{{ $chat->material->course_id }}">
+                        
+                        <div class="flex-grow-1">
+                            <textarea name="message" class="form-control bg-light border-0 px-3 py-2 rounded-3" 
+                                      rows="1" placeholder="Tulis balasan..." 
+                                      style="resize: none; font-size: 0.9rem; min-height: 42px;" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
+                            <i class="bi bi-send-fill fs-6"></i>
+                        </button>
+                    </form>
+                </div>
+
             </div>
-
         @empty
-             {{-- EMPTY STATE --}}
-             <div class="col-12 text-center py-5">
-                <div class="d-inline-block p-5 rounded-full bg-gray-50 mb-3 border border-dashed border-gray-200">
-                    <i class="bi bi-chat-square-text text-4xl text-gray-300"></i>
+            <div class="text-center py-5">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-chat-square-quote text-secondary fs-1 opacity-25"></i>
                 </div>
-                <h6 class="font-bold text-gray-600">Hening Sekali...</h6>
-                <p class="text-gray-400 text-sm">Belum ada mahasiswa yang mengajukan pertanyaan pada materi Anda.</p>
+                <h6 class="fw-bold text-secondary">Belum Ada Diskusi</h6>
+                <p class="text-muted small">Mahasiswa belum mengajukan pertanyaan apapun.</p>
             </div>
         @endforelse
     </div>
-    
-    {{-- Pagination (Optional) --}}
-    <div class="mt-5 d-flex justify-content-center">
-        {{-- $discussions->links() --}} 
-    </div>
 
+</div>
 @endsection

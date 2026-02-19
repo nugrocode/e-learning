@@ -45,15 +45,14 @@
             @endphp
 
             <div class="col-12 col-md-6 col-xl-4">
-                {{-- CARD WRAPPER (Tanpa Animasi Goyang) --}}
-                {{-- HAPUS: transition-transform, hover:-translate-y-1 --}}
+                {{-- CARD WRAPPER --}}
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-100 d-flex flex-column {{ $is_locked ? 'bg-gray-50' : 'hover:shadow-md transition-shadow duration-300' }}">
                     
-                    {{-- 1. HEADER GAMBAR (Compact & Statis) --}}
-                    {{-- HAPUS: hover:scale-105 --}}
+                    {{-- 1. HEADER GAMBAR (FIXED PATH) --}}
                     <div class="h-36 w-full relative overflow-hidden {{ $opacity_class }}">
                         @if(isset($mk->gambar) && $mk->gambar)
-                            <img src="{{ asset('images/' . $mk->gambar) }}" class="w-full h-full object-cover">
+                            {{-- PERBAIKAN DI SINI: Menggunakan storage/thumbnails/ --}}
+                            <img src="{{ asset('storage/thumbnails/' . $mk->gambar) }}" class="w-full h-full object-cover">
                         @else
                             <div class="w-full h-full {{ $bg_random }} d-flex align-items-center justify-content-center relative">
                                 <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 10px 10px;"></div>
@@ -80,7 +79,7 @@
                         @endif
                     </div>
 
-                    {{-- 2. KONTEN (Compact Padding) --}}
+                    {{-- 2. KONTEN --}}
                     <div class="p-3 d-flex flex-column flex-grow-1 {{ $opacity_class }}">
                         
                         {{-- Judul MK --}}
@@ -88,12 +87,12 @@
                             {{ $mk->nama_mk }}
                         </h5>
 
-                        {{-- Deskripsi (Compact) --}}
+                        {{-- Deskripsi --}}
                         <p class="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">
                             {{ $mk->deskripsi ?? 'Pelajari dasar hingga mahir dalam mata kuliah ini.' }}
                         </p>
 
-                        {{-- BOX NAMA DOSEN (Compact Style) --}}
+                        {{-- BOX NAMA DOSEN --}}
                         <div class="bg-gray-50 border border-gray-100 rounded-lg p-2 mb-3 d-flex align-items-center gap-2">
                             <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] flex-shrink-0">
                                 <i class="bi bi-person-fill"></i>
@@ -121,12 +120,12 @@
                                     <span class="{{ $mk->persen == 100 ? 'text-green-600' : 'text-blue-600' }}">{{ $mk->persen }}%</span>
                                 </div>
                                 
-                                {{-- Progress Bar (Tipis) --}}
+                                {{-- Progress Bar --}}
                                 <div class="progress h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
                                     <div class="progress-bar {{ $progress_color }}" role="progressbar" style="width: {{ $mk->persen }}%"></div>
                                 </div>
 
-                                {{-- Button (Compact) --}}
+                                {{-- Button --}}
                                 <a href="{{ url('/belajar/' . $mk->id . '/' . $mk->next_urutan) }}"
                                     class="btn w-100 rounded-lg py-2 font-bold text-xs shadow-sm transition-all duration-200 d-flex align-items-center justify-content-center gap-2
                                     {{ $mk->persen == 100 

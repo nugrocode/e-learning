@@ -119,7 +119,6 @@
                             @if($materi->file_lampiran)
                                 <div class="mt-3 pt-3 border-t">
                                     <p class="mb-2 text-xs font-bold text-gray-500 uppercase">File Pendukung</p>
-                                    {{-- [UPDATED] Mengarah ke storage/materials --}}
                                     <a href="{{ asset('storage/materials/' . $materi->file_lampiran) }}" target="_blank" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 shadow-sm">
                                         <i class="bi bi-file-earmark-arrow-down-fill"></i> Download Materi (PDF/PPT)
                                     </a>
@@ -140,19 +139,32 @@
                             @else
                                 <div class="bg-white p-3 border rounded shadow-sm">
                                     <h6 class="font-bold mb-2 text-gray-800 text-sm">Upload Tugas</h6>
+                                    
+                                    {{-- FORM PENGUMPULAN TUGAS --}}
                                     <form action="{{ url('/proses-tugas') }}" method="POST" enctype="multipart/form-data">
-                                        @csrf <input type="hidden" name="material_id" value="{{ $materi->id }}">
-                                        @if($materi->tipe_submission == 'github')
+                                        @csrf 
+                                        <input type="hidden" name="material_id" value="{{ $materi->id }}">
+                                        
+                                        {{-- LOGIKA INPUT BERDASARKAN TIPE SUBMISSION --}}
+                                        @if($materi->tipe_submission == 'github' || $materi->tipe_submission == 'link')
                                             <div class="mb-2">
-                                                <label class="form-label text-[10px] font-bold text-gray-500 uppercase">Link Repository</label>
-                                                <input type="url" name="file_tugas" class="form-control form-control-sm" placeholder="https://github.com/..." required>
+                                                <label class="form-label text-[10px] font-bold text-gray-500 uppercase">
+                                                    <i class="bi bi-github"></i> Link Repository / Tugas
+                                                </label>
+                                                {{-- PERBAIKAN UTAMA DI SINI: name="link_github" --}}
+                                                <input type="url" name="link_github" class="form-control form-control-sm" placeholder="https://github.com/username/repo" required>
+                                                <div class="form-text text-[10px]">Pastikan link dapat diakses publik.</div>
                                             </div>
                                         @else
                                             <div class="mb-2">
-                                                <label class="form-label text-[10px] font-bold text-gray-500 uppercase">File (PDF/ZIP)</label>
+                                                <label class="form-label text-[10px] font-bold text-gray-500 uppercase">
+                                                    <i class="bi bi-file-earmark-arrow-up"></i> File (PDF/ZIP)
+                                                </label>
+                                                {{-- INPUT FILE --}}
                                                 <input type="file" name="file_tugas" class="form-control form-control-sm" required>
                                             </div>
                                         @endif
+
                                         <button class="btn btn-dark w-100 btn-sm font-bold mt-2" type="submit">
                                             <i class="bi bi-send-fill me-1"></i> Kirim
                                         </button>
@@ -192,7 +204,6 @@
                                     @forelse($diskusi as $chat)
                                         <div class="forum-card animate-fade-in-up" id="chat-{{ $chat->id }}">
                                             <div class="d-flex gap-2">
-                                                {{-- [UPDATED] Avatar Logic --}}
                                                 <img src="{{ $chat->user->foto_profil && $chat->user->foto_profil != 'default.png' ? asset('storage/profiles/' . $chat->user->foto_profil) : asset('images/logo_ukit.png') }}" 
                                                      class="forum-avatar" 
                                                      onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
@@ -210,7 +221,6 @@
                                                     </div>
                                                     <p class="text-xs md:text-sm text-gray-700 mb-2">{{ $chat->message }}</p>
 
-                                                    {{-- TOMBOL AKSI --}}
                                                     <div class="d-flex align-items-center gap-3 text-xs action-buttons">
                                                         <span class="cursor-pointer text-blue-900 font-bold" onclick="toggleForm('{{ $chat->id }}')">Balas</span>
                                                         @if($chat->replies->count() > 0)
@@ -226,7 +236,6 @@
                                                             @foreach($chat->replies as $reply)
                                                                 <div class="bg-gray-50 p-2 rounded mb-2 border" id="reply-{{ $reply->id }}">
                                                                     <div class="d-flex gap-2">
-                                                                        {{-- [UPDATED] Avatar Reply --}}
                                                                         <img src="{{ $reply->user->foto_profil && $reply->user->foto_profil != 'default.png' ? asset('storage/profiles/' . $reply->user->foto_profil) : asset('images/logo_ukit.png') }}" 
                                                                              class="forum-avatar" 
                                                                              onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
@@ -247,7 +256,6 @@
                                                         </div>
                                                     </div>
 
-                                                    {{-- Form Balas --}}
                                                     <div class="mt-2" id="replyForm-{{ $chat->id }}" style="display: none;">
                                                         <form class="formDiskusi" data-parent="{{ $chat->id }}">
                                                             @csrf <input type="hidden" name="course_id" value="{{ $course_id }}"> <input type="hidden" name="material_id" value="{{ $materi->id }}"> <input type="hidden" name="parent_id" value="{{ $chat->id }}">
@@ -316,7 +324,6 @@
 
 @push('scripts')
     <script>
-        // [UPDATED] Base URL untuk Storage & Default Image
         const storageUrl = "{{ asset('storage/profiles') }}/";
         const defaultUrl = "{{ asset('images/logo_ukit.png') }}";
 
@@ -355,7 +362,6 @@
             } catch (error) { alert('Gagal menghapus.'); }
         }
 
-        // AJAX SUBMIT KOMENTAR
         document.addEventListener('DOMContentLoaded', function() {
             document.body.addEventListener('submit', async function(e) {
                 if (e.target.classList.contains('formDiskusi')) {
@@ -380,12 +386,9 @@
                         if(res.status === 'success') {
                             const d = res.data;
                             const roleBadge = d.role == 'dosen' ? 'badge-dosen' : 'badge-mhs';
-                            
-                            // [UPDATED] JS Logic untuk Foto Profil Baru
                             const fotoSrc = (d.foto && d.foto !== 'default.png') ? storageUrl + d.foto : defaultUrl;
 
                             if (parentId == 0) {
-                                // Logic Tambah Komentar Utama
                                 const html = `
                                     <div class="forum-card animate-fade-in-up" id="chat-${d.id}">
                                         <div class="d-flex gap-2">
@@ -417,7 +420,6 @@
                                     </div>`;
                                 document.getElementById('forumList').insertAdjacentHTML('afterbegin', html);
                             } else {
-                                // Logic Tambah Balasan
                                 const html = `
                                     <div class="bg-gray-50 p-2 rounded mb-2 border" id="reply-${d.id}">
                                         <div class="d-flex gap-2">

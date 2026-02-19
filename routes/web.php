@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\MahasiswaController;
+use App\Http\Controllers\GoogleController; // <--- PENTING: Integrasi Google Drive
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +27,12 @@ Route::get('/', [AuthController::class, 'index']); // Landing ke Login
 Route::get('/login', [AuthController::class, 'index'])->name('login');
 Route::post('/login-proses', [AuthController::class, 'login']);
 Route::get('/logout', [AuthController::class, 'logout']);
+
+// ==========================================================
+// 1.5. GOOGLE DRIVE INTEGRATION (KHUSUS DOSEN)
+// ==========================================================
+Route::get('/google/connect', [GoogleController::class, 'redirectToGoogle']);
+Route::get('/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
 
 // ==========================================================
@@ -90,7 +97,7 @@ Route::middleware(['cek_role:dosen'])->group(function () {
 
     // 3. MANAJEMEN MATERI & KURIKULUM (Updated Flow)
     Route::get('/dosen/materi', [DosenController::class, 'materiIndex']);       // Halaman Pilih Kelas
-    Route::get('/dosen/materi/{id}', [DosenController::class, 'materiShow']);   // Halaman Susun Materi (Timeline)
+    Route::get('/dosen/materi/{id}', [DosenController::class, 'materiShow']);    // Halaman Susun Materi (Timeline)
     
     // CRUD Materi
     Route::post('/dosen/materi', [DosenController::class, 'materiStore']);
@@ -110,6 +117,7 @@ Route::middleware(['cek_role:dosen'])->group(function () {
     // 5. PENUGASAN & NILAI
     Route::get('/dosen/tugas', [DosenController::class, 'tugasIndex']);
     Route::put('/dosen/nilai/{id}', [DosenController::class, 'nilaiUpdate']);
+    Route::get('/dosen/tugas/download/{id}', [DosenController::class, 'downloadAssignment']); // <--- PENTING: Download File
 
     // 6. DISKUSI
     Route::get('/dosen/diskusi', [DosenController::class, 'diskusiIndex']);
@@ -120,7 +128,7 @@ Route::middleware(['cek_role:dosen'])->group(function () {
     Route::get('/dosen/profil', [DosenController::class, 'profilIndex']);
     Route::post('/dosen/profil', [DosenController::class, 'profilUpdate']);
 
-    // 8. PREVIEW MATERI
+    // 8. PREVIEW MATERI (Opsional)
     Route::get('/dosen/preview/{course_id}/{urutan}', [DosenController::class, 'preview']);
 });
 

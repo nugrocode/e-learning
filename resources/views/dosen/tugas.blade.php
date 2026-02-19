@@ -1,241 +1,170 @@
 @extends('layouts.dosen')
 
-@section('title', 'Penugasan & Nilai')
+@section('title', 'Penilaian')
 
 @section('content')
-
-{{-- HEADER & STATS --}}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 p-4 bg-white rounded-2xl shadow-sm border border-gray-100 gap-3">
-    <div>
-        <h4 class="font-bold text-gray-800 mb-0 text-lg md:text-xl"><i class="bi bi-journal-check text-blue-600 me-2"></i>Penugasan</h4>
-        <p class="text-xs text-gray-400 mt-1 mb-0">Kelola tugas mahasiswa, cek file masuk, dan beri nilai.</p>
+<div class="container-fluid px-0">
+    {{-- HEADER HALAMAN --}}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="font-bold text-xl text-slate-800 mb-0">Manajemen Penilaian</h4>
+            <p class="text-slate-500 text-xs mb-0">Klik pada materi untuk melihat kiriman mahasiswa. <span class="fw-bold">Kuis disembunyikan.</span></p>
+        </div>
+        
+        <div class="bg-white border border-slate-200 rounded-lg d-flex align-items-center px-2 shadow-sm">
+            <i class="bi bi-funnel text-slate-400 text-xs me-1"></i>
+            <form action="{{ url('/dosen/tugas') }}" method="GET" class="m-0">
+                <select name="course_id" class="form-select border-0 shadow-none text-xs font-bold text-slate-600 bg-transparent py-1" onchange="this.form.submit()" style="min-width: 180px; cursor: pointer;">
+                    <option value="">Semua Mata Kuliah</option>
+                    @foreach($courses as $c)
+                        <option value="{{ $c->id }}" {{ request('course_id') == $c->id ? 'selected' : '' }}>{{ $c->nama_mk }}</option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
     </div>
-    
-    {{-- STATISTIK MINI --}}
-    <div class="d-flex gap-3 w-100 w-md-auto">
-        <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 flex-grow-1 flex-md-grow-0 text-center text-md-start">
-            <span class="d-block text-[10px] text-blue-500 uppercase font-bold">Total Tugas</span>
-            <span class="fs-5 fw-bold text-blue-700">{{ $total_submissions }}</span>
-        </div>
-        <div class="bg-orange-50 px-4 py-2 rounded-xl border border-orange-100 flex-grow-1 flex-md-grow-0 text-center text-md-start">
-            <span class="d-block text-[10px] text-orange-500 uppercase font-bold">Perlu Dinilai</span>
-            <span class="fs-5 fw-bold text-orange-700">{{ $pending_grading }}</span>
-        </div>
-    </div>
-</div>
 
-{{-- FILTER COURSE --}}
-<div class="mb-4">
-    <form action="{{ url('/dosen/tugas') }}" method="GET">
-        <div class="input-group shadow-sm rounded-xl overflow-hidden border-0">
-            <span class="input-group-text bg-white border-0 ps-3"><i class="bi bi-filter text-gray-400"></i></span>
-            <select name="course_id" class="form-select border-0 text-sm py-3" onchange="this.form.submit()">
-                <option value="">Semua Mata Kuliah</option>
-                @foreach($courses as $c)
-                    <option value="{{ $c->id }}" {{ request('course_id') == $c->id ? 'selected' : '' }}>{{ $c->nama_mk }}</option>
-                @endforeach
-            </select>
-        </div>
-    </form>
-</div>
+    {{-- LIST PENUGASAN --}}
+    <div class="d-flex flex-column gap-3">
+        @forelse($assignments as $assign)
+            @if($assign->kategori == 'quiz') @continue @endif
 
-{{-- GRID TUGAS --}}
-@if($assignments->count() > 0)
-    <div class="row g-4">
-        @foreach($assignments as $m)
-        <div class="col-md-6 col-lg-4">
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition h-100 d-flex flex-column relative overflow-hidden group">
-                
-                {{-- Badge Tipe --}}
-                <div class="absolute top-0 right-0 p-3">
-                    @if($m->tipe_submission == 'github')
-                        <span class="badge bg-dark text-white rounded-lg shadow-sm"><i class="bi bi-github me-1"></i> GitHub</span>
-                    @else
-                        <span class="badge bg-green-500 text-white rounded-lg shadow-sm"><i class="bi bi-google-drive me-1"></i> File</span>
-                    @endif
-                </div>
+            @php
+                $totalSub = $assign->submissions->count();
+                $gradedSub = $assign->submissions->whereNotNull('nilai')->count();
+                $progressPercent = $totalSub > 0 ? ($gradedSub / $totalSub) * 100 : 0;
+            @endphp
 
-                <div class="p-4 flex-grow-1">
-                    <div class="mb-2">
-                        <span class="text-[10px] font-bold text-blue-500 uppercase tracking-wider">{{ $m->course->nama_mk }}</span>
-                    </div>
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                {{-- MINIMALIST HEADER - Default Tertutup --}}
+                <div class="px-3 py-2 bg-slate-50 border-bottom d-flex justify-content-between align-items-center cursor-pointer hover:bg-slate-100 transition-colors" 
+                     onclick="toggleCard('{{ $assign->id }}')">
                     
-                    <h5 class="font-bold text-gray-800 mb-2 line-clamp-2">{{ $m->judul_materi }}</h5>
-                    <p class="text-xs text-gray-400 mb-4 line-clamp-2">{{ $m->deskripsi_materi }}</p>
-                    
-                    {{-- Progress Bar --}}
-                    @php
-                        $total_sub = $m->submissions->count();
-                        $graded = $m->submissions->whereNotNull('nilai')->count();
-                        $percent = $total_sub > 0 ? ($graded / $total_sub) * 100 : 0;
-                    @endphp
-                    
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <div class="d-flex justify-content-between text-[10px] fw-bold text-gray-500 mb-1">
-                            <span>Progress Penilaian</span>
-                            <span>{{ $graded }} / {{ $total_sub }} Mahasiswa</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="w-8 h-8 bg-slate-800 text-white rounded-lg d-flex align-items-center justify-content-center">
+                            <i class="bi bi-file-earmark-text text-sm"></i>
                         </div>
-                        <div class="progress h-1.5 rounded-full bg-gray-200">
-                            <div class="progress-bar bg-blue-500 rounded-full" style="width: {{ $percent }}%"></div>
+                        <div>
+                            <h6 class="font-bold text-sm text-slate-800 mb-0">{{ $assign->judul_materi }}</h6>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ $assign->course->nama_mk }}</span>
                         </div>
                     </div>
-                </div>
-                
-                <div class="p-3 border-top bg-gray-50">
-                    <button class="btn btn-primary w-100 rounded-xl font-bold text-sm py-2 shadow-sm" 
-                            data-bs-toggle="modal" data-bs-target="#modalNilai{{ $m->id }}">
-                        <i class="bi bi-pen me-1"></i> Periksa & Nilai
-                    </button>
-                </div>
-            </div>
-        </div>
-        @endforeach
-    </div>
-@else
-    <div class="text-center py-5">
-        <img src="https://img.freepik.com/free-vector/check-list-concept-illustration_114360-475.jpg" class="w-48 mx-auto opacity-50 grayscale" alt="Empty">
-        <h6 class="text-gray-500 mt-3">Tidak ada tugas aktif.</h6>
-        <p class="text-xs text-gray-400">Buat materi dengan tipe "Upload File" atau "GitHub" di menu Susun Materi.</p>
-        <a href="{{ url('/dosen/materi') }}" class="btn btn-outline-primary btn-sm rounded-xl mt-2">Buat Tugas Baru</a>
-    </div>
-@endif
 
-{{-- MODAL PENILAIAN (SPLIT LAYOUT) --}}
-@foreach($assignments as $m)
-<div class="modal fade" id="modalNilai{{ $m->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content rounded-2xl border-0 shadow-2xl h-[90vh]">
-            
-            <div class="modal-header border-bottom bg-white p-4">
-                <div>
-                    <h5 class="modal-title font-bold text-gray-800"><i class="bi bi-journal-check me-2 text-blue-600"></i>{{ $m->judul_materi }}</h5>
-                    <p class="mb-0 text-xs text-gray-400">Total Pengumpulan: <strong class="text-blue-600">{{ $m->submissions->count() }}</strong></p>
+                    <div class="d-flex align-items-center gap-4">
+                        <div class="d-none d-md-block" style="width: 100px;">
+                            <div class="progress h-1 bg-slate-200 rounded-full">
+                                <div class="progress-bar bg-indigo-500" style="width: {{ $progressPercent }}%"></div>
+                            </div>
+                        </div>
+                        <div class="text-end" style="min-width: 80px;">
+                            <span class="d-block text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Submisi</span>
+                            <span class="text-xs font-bold text-slate-700">{{ $totalSub }} <small class="text-slate-400">Mhs</small></span>
+                        </div>
+                        {{-- Icon dirotasi -90deg sebagai indikator tertutup --}}
+                        <i class="bi bi-chevron-down text-slate-300 text-xs transition-transform duration-200" id="icon-{{ $assign->id }}" style="transform: rotate(-90deg);"></i>
+                    </div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
 
-            <div class="modal-body p-0 bg-gray-50">
-                <div class="row g-0 h-100">
-                    
-                    {{-- KIRI: DAFTAR MAHASISWA & FILE --}}
-                    <div class="col-lg-8 border-end h-100 overflow-auto no-scrollbar custom-scroll">
-                        <div class="p-4">
-                            @if($m->submissions->count() > 0)
-                                <div class="table-responsive bg-white rounded-xl shadow-sm border border-gray-100">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-gray-50 text-[10px] text-gray-400 uppercase font-bold">
-                                            <tr>
-                                                <th class="ps-4 py-3">Mahasiswa</th>
-                                                <th>File / Link</th>
-                                                <th>Nilai</th>
-                                                <th class="text-end pe-4">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($m->submissions as $sub)
-                                            <tr>
-                                                <td class="ps-4">
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <img src="{{ $sub->user->foto_profil ? asset('storage/profiles/'.$sub->user->foto_profil) : asset('images/default.png') }}" 
-                                                             class="w-8 h-8 rounded-full border" onerror="this.src='https://ui-avatars.com/api/?name={{ $sub->user->nama_lengkap }}'">
-                                                        <div>
-                                                            <h6 class="text-xs font-bold text-gray-800 mb-0">{{ $sub->user->nama_lengkap }}</h6>
-                                                            <small class="text-[9px] text-gray-400">{{ $sub->created_at->format('d M H:i') }}</small>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    @if($m->tipe_submission == 'github')
-                                                        <a href="{{ $sub->file_path }}" target="_blank" class="btn btn-dark btn-sm rounded-lg text-[10px] px-3">
-                                                            <i class="bi bi-github me-1"></i> Repo
-                                                        </a>
+                {{-- COMPACT TABLE - Style Display None agar tertutup saat halaman dimuat --}}
+                <div id="content-{{ $assign->id }}" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="bg-slate-50/50">
+                                <tr class="text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">
+                                    <th class="ps-4 py-2" width="35%">Mahasiswa</th>
+                                    <th class="py-2 text-center" width="20%">Karya</th>
+                                    <th class="py-2 text-center" width="20%">Waktu</th>
+                                    <th class="pe-4 py-2 text-end" width="25%">Nilai</th>
+                                </tr>
+                            </thead>
+                            <tbody class="border-top-0">
+                                @forelse($assign->submissions as $sub)
+                                    <tr>
+                                        <td class="ps-4 py-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <img src="{{ asset('images/' . ($sub->user->foto_profil ?? 'default.png')) }}" 
+                                                     class="rounded-full border border-slate-100" width="28" height="28"
+                                                     onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($sub->user->nama_lengkap) }}&background=f1f5f9&color=64748b'">
+                                                <div class="lh-1">
+                                                    <div class="font-bold text-slate-700 text-xs">{{ $sub->user->nama_lengkap }}</div>
+                                                    <small class="text-[9px] text-slate-400 font-mono">{{ $sub->user->nim_nidn }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center py-2">
+                                            @if($sub->file_path)
+                                                {{-- [FIX] Menggunakan route download via Controller --}}
+                                                <a href="{{ url('/dosen/tugas/download/'.$sub->id) }}" target="_blank" 
+                                                   class="btn btn-link p-0 text-indigo-600 text-[11px] font-bold text-decoration-none hover:text-indigo-800 transition-colors">
+                                                    @if($assign->tipe_submission == 'github' || $assign->tipe_submission == 'link')
+                                                        <i class="bi bi-github me-1"></i>Buka Link
                                                     @else
-                                                        <a href="{{ asset('storage/submissions/'.$sub->file_path) }}" target="_blank" class="btn btn-success btn-sm rounded-lg text-[10px] px-3">
-                                                            <i class="bi bi-download me-1"></i> Unduh
-                                                        </a>
+                                                        <i class="bi bi-file-earmark-arrow-down me-1"></i>Unduh File
                                                     @endif
-                                                </td>
-                                                <td style="width: 100px;">
-                                                    {{-- FORM INPUT NILAI LANGSUNG DI TABEL --}}
-                                                    <form action="{{ url('/dosen/nilai/'.$sub->id) }}" method="POST" id="form-nilai-{{ $sub->id }}">
-                                                        @csrf @method('PUT')
-                                                        <input type="number" name="nilai" class="form-control form-control-sm text-center fw-bold {{ $sub->nilai ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50' }}" 
-                                                               value="{{ $sub->nilai }}" placeholder="0-100" min="0" max="100">
-                                                    </form>
-                                                </td>
-                                                <td class="text-end pe-4">
-                                                    <button type="submit" form="form-nilai-{{ $sub->id }}" class="btn btn-light border btn-sm rounded-lg text-blue-600 shadow-sm" title="Simpan Nilai">
-                                                        <i class="bi bi-check-lg"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @else
-                                <div class="text-center py-5">
-                                    <i class="bi bi-inbox text-gray-300 text-4xl mb-2"></i>
-                                    <p class="text-xs text-gray-400">Belum ada mahasiswa yang mengumpulkan tugas ini.</p>
-                                </div>
-                            @endif
-                        </div>
+                                                </a>
+                                            @else
+                                                <span class="text-[10px] text-slate-300 italic">Kosong</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center py-2 text-[10px] text-slate-500">
+                                            {{ \Carbon\Carbon::parse($sub->created_at)->format('d/m/y H:i') }}
+                                        </td>
+                                        <td class="pe-4 py-2 text-end">
+                                            <form action="{{ url('/dosen/tugas/nilai') }}" method="POST" class="d-flex justify-content-end align-items-center gap-1 m-0">
+                                                @csrf
+                                                <input type="hidden" name="submission_id" value="{{ $sub->id }}">
+                                                <input type="number" name="nilai" value="{{ $sub->nilai }}" 
+                                                       class="form-control form-control-sm text-center font-bold text-xs py-1 px-1 {{ $sub->nilai ? 'bg-green-50 text-green-700 border-green-200' : 'bg-white' }}" 
+                                                       style="width: 50px; height: 28px;" placeholder="-" min="0" max="100" required>
+                                                <button type="submit" class="btn btn-slate-800 text-white btn-sm p-0 rounded shadow-sm hover:bg-black transition-all" style="width: 28px; height: 28px;">
+                                                    <i class="bi bi-check text-sm"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-slate-400 text-xs italic">Belum ada kiriman tugas.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
-
-                    {{-- KANAN: INSTRUKSI & INFO --}}
-                    <div class="col-lg-4 bg-white h-100 overflow-auto border-start">
-                        <div class="p-4">
-                            <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-4">
-                                <h6 class="font-bold text-blue-700 text-sm mb-1">Informasi Tugas</h6>
-                                <p class="text-xs text-blue-600 mb-0 line-clamp-3">{{ $m->deskripsi_materi }}</p>
-                            </div>
-
-                            @if($m->link_drive)
-                            <div class="mb-4">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Folder Drive Dosen</label>
-                                <a href="{{ $m->link_drive }}" target="_blank" class="d-flex align-items-center gap-2 p-2 rounded-xl border hover:bg-gray-50 transition text-decoration-none">
-                                    <i class="bi bi-folder-fill text-yellow-400 fs-4"></i>
-                                    <div>
-                                        <span class="d-block text-xs font-bold text-gray-700">Buka Folder Penampungan</span>
-                                        <span class="d-block text-[9px] text-gray-400">Google Drive</span>
-                                    </div>
-                                    <i class="bi bi-box-arrow-up-right ms-auto text-gray-400 text-xs"></i>
-                                </a>
-                            </div>
-                            @endif
-
-                            <div class="mb-3">
-                                <label class="text-[10px] font-bold text-gray-400 uppercase mb-2">Panduan Penilaian</label>
-                                <ul class="list-unstyled text-xs text-gray-500 d-flex flex-column gap-2">
-                                    <li class="d-flex align-items-start gap-2">
-                                        <i class="bi bi-1-circle text-blue-500"></i>
-                                        <span>Unduh file atau buka link GitHub mahasiswa.</span>
-                                    </li>
-                                    <li class="d-flex align-items-start gap-2">
-                                        <i class="bi bi-2-circle text-blue-500"></i>
-                                        <span>Periksa kelengkapan dan kesesuaian tugas.</span>
-                                    </li>
-                                    <li class="d-flex align-items-start gap-2">
-                                        <i class="bi bi-3-circle text-blue-500"></i>
-                                        <span>Input nilai (0-100) pada kolom nilai dan klik tombol centang (<i class="bi bi-check-lg"></i>) untuk menyimpan.</span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
-        </div>
+        @empty
+            <div class="text-center py-5 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                <i class="bi bi-clipboard-x text-3xl text-slate-300 mb-2 d-block"></i>
+                <h6 class="font-bold text-slate-500 text-sm">Data Kosong</h6>
+                <p class="text-slate-400 text-[11px]">Belum ada tugas bertipe berkas/link yang aktif.</p>
+            </div>
+        @endforelse
     </div>
 </div>
-@endforeach
 
 <style>
-    .custom-scroll::-webkit-scrollbar { width: 4px; display: block; }
-    .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    .table > :not(caption) > * > * { padding: 0.4rem 0.4rem; }
+    .form-control:focus { box-shadow: none; border-color: #6366f1; }
+    .btn-slate-800 { background-color: #1e293b; }
+    .btn-slate-800:hover { background-color: #0f172a; }
 </style>
 
 @endsection
+
+@push('scripts')
+<script>
+    /** * Logika Toggle dengan Status Tertutup secara Default */
+    function toggleCard(id) {
+        const content = document.getElementById('content-' + id);
+        const icon = document.getElementById('icon-' + id);
+        
+        if (content.style.display === "none") {
+            content.style.display = "block";
+            icon.style.transform = "rotate(0deg)";
+        } else {
+            content.style.display = "none";
+            icon.style.transform = "rotate(-90deg)";
+        }
+    }
+</script>
+@endpush

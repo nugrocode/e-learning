@@ -28,9 +28,10 @@
                     {{-- 1. Bagian Gambar (Header) --}}
                     <div class="h-40 w-full relative overflow-hidden">
                         @if(isset($mk->gambar) && $mk->gambar)
-                            <img src="{{ asset('images/' . $mk->gambar) }}" class="w-full h-full object-cover">
+                            {{-- PERBAIKAN DI SINI: Menggunakan storage/thumbnails/ --}}
+                            <img src="{{ asset('storage/thumbnails/' . $mk->gambar) }}" class="w-full h-full object-cover">
                         @else
-                            {{-- Placeholder Keren: Gradasi + Icon --}}
+                            {{-- Placeholder --}}
                             <div class="w-full h-full {{ $bg_random }} d-flex align-items-center justify-content-center relative">
                                 <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 10px 10px;"></div>
                                 <div class="text-center text-white z-10 p-3">
@@ -94,7 +95,7 @@
             </div>
 
         @empty
-            {{-- Empty State (Jika belum ambil kelas) --}}
+            {{-- Empty State --}}
             <div class="col-12 py-5 text-center">
                 <div class="d-inline-block p-5 rounded-full bg-gray-50 mb-4 border border-dashed border-gray-200">
                     <i class="bi bi-journal-bookmark text-5xl text-gray-300"></i>

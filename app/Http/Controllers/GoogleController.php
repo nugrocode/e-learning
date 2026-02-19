@@ -3,64 +3,79 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-// --- BAGIAN INI YANG TADI HILANG ---
 use Google\Client as GoogleClient;
 use Google\Service\Drive as GoogleDrive;
-// -----------------------------------
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 
 class GoogleController extends Controller
 {
-    // Fungsi untuk menyiapkan Client Google
+    // Fungsi Private untuk Setup Konfigurasi Client
     private function getClient()
     {
         $client = new GoogleClient();
         $client->setClientId(env('GOOGLE_CLIENT_ID'));
         $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
         $client->setRedirectUri(env('GOOGLE_REDIRECT_URI'));
-        $client->addScope(GoogleDrive::DRIVE_FILE); // Izin akses file
-        $client->setAccessType('offline'); // Agar dapat refresh token
-        $client->setPrompt('select_account consent'); // Memaksa user login ulang jika perlu
+        
+        // Scope Wajib: Akses File Drive
+        $client->addScope("https://www.googleapis.com/auth/drive.file");
+        
+        // Penting: Agar kita dapat Refresh Token (akses jangka panjang)
+        $client->setAccessType('offline'); 
+        $client->setPrompt('consent select_account'); 
         
         return $client;
     }
 
-    // 1. Mengarahkan Dosen ke Halaman Login Google
+    // 1. Redirect Dosen ke Halaman Login Google
     public function redirectToGoogle()
     {
+        // Cek apakah user adalah dosen
+        if (Session::get('role') != 'dosen') {
+            return redirect('/login')->with('error', 'Hanya Dosen yang bisa menghubungkan Drive.');
+        }
+
         $client = $this->getClient();
         $authUrl = $client->createAuthUrl();
+        
+        // Arahkan user keluar aplikasi menuju Google
         return redirect()->away($authUrl);
     }
 
-    // 2. Menerima Balikan (Callback) dari Google
+    // 2. Proses Callback (Setelah Dosen klik 'Allow' di Google)
     public function handleGoogleCallback(Request $request)
     {
-        // Cek jika user membatalkan login (tidak ada kode)
+        // Jika user membatalkan / klik cancel
         if (!$request->code) {
-            return redirect('/dosen/profil')->with('error', 'Login Google dibatalkan.');
+            return redirect('/dosen/profil')->with('error', 'Koneksi Google Drive dibatalkan.');
         }
 
         try {
             $client = $this->getClient();
             
-            // Tukar Kode dengan Token Asli
+            // Tukar "Code" dengan "Token"
             $token = $client->fetchAccessTokenWithAuthCode($request->code);
 
-            // Cek jika ada error di token
+            // Cek apakah token valid
             if (isset($token['error'])) {
-                return redirect('/dosen/profil')->with('error', 'Gagal mendapatkan akses token.');
+                return redirect('/dosen/profil')->with('error', 'Gagal login ke Google: ' . $token['error']);
             }
 
             // Simpan Token ke Database User yang sedang login
-            $user = User::find(Auth::id()); // Menggunakan Auth::id() agar lebih aman
+            // Pastikan session user_id masih ada
+            $userId = Session::get('user_id');
+            if (!$userId) {
+                return redirect('/login')->with('error', 'Sesi habis, silakan login ulang.');
+            }
+
+            $user = User::find($userId);
             
-            // Simpan token akses (format JSON)
+            // Simpan token akses utama
             $user->google_token = json_encode($token);
             
-            // Simpan refresh token (hanya muncul saat pertama kali connect)
+            // Simpan Refresh Token (Hanya muncul saat pertama kali connect / prompt consent)
+            // Ini SANGAT PENTING untuk upload jangka panjang tanpa login ulang terus
             if (isset($token['refresh_token'])) {
                 $user->google_refresh_token = $token['refresh_token'];
             }
@@ -70,7 +85,7 @@ class GoogleController extends Controller
             return redirect('/dosen/profil')->with('success', 'Berhasil! Akun Google Drive terhubung.');
 
         } catch (\Exception $e) {
-            return redirect('/dosen/profil')->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return redirect('/dosen/profil')->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
 }

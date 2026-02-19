@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Services\GeminiService;
+use App\Helpers\DriveHelper;
 
 // Import Models
 use App\Models\Concentration;
@@ -52,6 +53,7 @@ class MahasiswaController extends Controller
     public function myClasses() 
     {
         $user_id = Session::get('user_id');
+        // Ambil course dimana user memiliki progress pada materinya
         $courses = Course::whereHas('materials.progress', function($q) use ($user_id) { 
             $q->where('user_id', $user_id); 
         })->get();
@@ -106,6 +108,7 @@ class MahasiswaController extends Controller
             $course->next_urutan = $next_urutan;
             $course->total_materi = $total_materi;
 
+            // Logika Locked/Open
             if ($total_materi == 0) {
                 $course->status_akses = 'empty'; 
                 $course->pesan_kunci = 'Materi belum diinput oleh Dosen.';
@@ -116,22 +119,25 @@ class MahasiswaController extends Controller
                 $course->status_akses = 'open';
             }
 
+            // Cek apakah MK ini selesai agar MK berikutnya terbuka
             $is_previous_completed = ($total_materi > 0 && $course->persen == 100);
         }
 
         return view('user.mata_kuliah', compact('concentration', 'courses'));
     }
 
-
     // ==========================================================
-    // 2. PROSES BELAJAR (MATERI, KUIS, TUGAS)
+    // 2. PROSES BELAJAR (LMS CORE)
     // ==========================================================
 
     public function belajar($course_id, $urutan = 1) 
     {
         $user_id = Session::get('user_id');
+        
+        // Cari materi berdasarkan course_id dan urutan
         $materi = Material::with('course')->where('course_id', $course_id)->where('urutan', $urutan)->firstOrFail();
         
+        // Cek Prasyarat Materi Sebelumnya
         if ($urutan > 1) {
             $prev = Material::where('course_id', $course_id)->where('urutan', $urutan - 1)->first();
             if ($prev && !Progress::where('user_id', $user_id)->where('material_id', $prev->id)->exists()) {
@@ -140,8 +146,11 @@ class MahasiswaController extends Controller
         }
 
         $daftar_materi = Material::where('course_id', $course_id)->orderBy('urutan', 'asc')->get();
+        
+        // Cek Submission Tugas
         $data_tugas = ($materi->kategori != 'quiz') ? Submission::where('user_id', $user_id)->where('material_id', $materi->id)->first() : null;
         
+        // Data Kuis
         $data_nilai = null;
         $soal_kuis = [];
         
@@ -152,6 +161,7 @@ class MahasiswaController extends Controller
             }
         }
         
+        // Diskusi
         $diskusi = Discussion::with(['user', 'replies.user'])
                     ->where('material_id', $materi->id)
                     ->whereNull('parent_id')
@@ -194,27 +204,90 @@ class MahasiswaController extends Controller
         return redirect('/belajar/' . $request->course_id . '/' . $request->urutan)->with('success', 'Kuis Selesai! Skor: ' . $skor_akhir);
     }
 
+    // ==========================================================
+    // [FIX] PENGUMPULAN TUGAS (FILE vs LINK)
+    // ==========================================================
     public function storeAssignment(Request $request) 
     {
         $user_id = Session::get('user_id');
-        $path = $request->file_tugas; 
-        
-        if ($request->hasFile('file_tugas')) { 
-            $file = $request->file('file_tugas'); 
-            $filename = time() . '_' . $user_id . '_' . $file->getClientOriginalName(); 
-            $file->storeAs('submissions', $filename, 'public');
-            $path = $filename;
-        }
-        
-        Submission::create(['user_id' => $user_id, 'material_id' => $request->material_id, 'file_path' => $path, 'nilai' => null]);
-        Progress::firstOrCreate(['user_id' => $user_id, 'material_id' => $request->material_id], ['status' => 'selesai', 'tanggal_selesai' => now()]);
+        $materi = Material::with('course.dosen')->findOrFail($request->material_id);
+        $filePath = null;
 
-        return back()->with('success', 'Tugas dikirim!');
+        // --- SKENARIO 1: TUGAS TIPE FILE ---
+        if ($materi->tipe_submission == 'file') {
+            
+            if (!$request->hasFile('file_tugas')) {
+                return back()->with('error', 'Wajib upload file dokumen/tugas!');
+            }
+
+            $file = $request->file('file_tugas');
+            $dosen = $materi->course->dosen;
+
+            // Logika Upload Google Drive Dosen
+            if ($dosen && $dosen->google_token) {
+                try {
+                    $folderId = null;
+                    if (!empty($materi->link_drive)) {
+                        $parsedUrl = parse_url($materi->link_drive);
+                        $folderId = isset($parsedUrl['path']) ? basename($parsedUrl['path']) : basename($materi->link_drive);
+                    }
+
+                    $linkDrive = DriveHelper::uploadToDosenDrive($file, $dosen, $folderId);
+                    
+                    if ($linkDrive) {
+                        $filePath = $linkDrive;
+                    } else {
+                        // Fallback ke Lokal jika Drive Error/Penuh
+                        $filename = time() . '_' . $user_id . '_' . $file->getClientOriginalName();
+                        $file->storeAs('submissions', $filename, 'public');
+                        $filePath = $filename;
+                    }
+                } catch (\Exception $e) {
+                    // Fallback jika Exception
+                    $filename = time() . '_' . $user_id . '_' . $file->getClientOriginalName();
+                    $file->storeAs('submissions', $filename, 'public');
+                    $filePath = $filename;
+                }
+            } else {
+                // Dosen belum connect Drive -> Simpan Lokal
+                $filename = time() . '_' . $user_id . '_' . $file->getClientOriginalName();
+                $file->storeAs('submissions', $filename, 'public');
+                $filePath = $filename;
+            }
+        } 
+        
+        // --- SKENARIO 2: TUGAS TIPE LINK / GITHUB ---
+        else {
+            // Ambil input dari 'link_tugas' ATAU 'link_github' (agar fleksibel)
+            $link = $request->input('link_tugas') ?? $request->input('link_github');
+
+            if (empty($link)) {
+                return back()->with('error', 'Link tugas/GitHub wajib diisi!');
+            }
+            
+            // Simpan link langsung ke database
+            $filePath = $link;
+        }
+
+        // Simpan Data
+        Submission::create([
+            'user_id' => $user_id, 
+            'material_id' => $request->material_id, 
+            'file_path' => $filePath, 
+            'nilai' => null
+        ]);
+
+        // Update Progress Belajar
+        Progress::firstOrCreate(
+            ['user_id' => $user_id, 'material_id' => $request->material_id], 
+            ['status' => 'selesai', 'tanggal_selesai' => now()]
+        );
+
+        return back()->with('success', 'Tugas berhasil dikirim!');
     }
 
-
     // ==========================================================
-    // 3. FITUR TAMBAHAN (CHAT AI, PROFIL, DISKUSI)
+    // 3. FITUR TAMBAHAN (AI, PROFIL, DISKUSI)
     // ==========================================================
 
     public function askAi(Request $request) 
@@ -254,19 +327,16 @@ class MahasiswaController extends Controller
         return back()->with('success', 'Profil diperbarui!'); 
     }
 
-    // --- DISKUSI (FIX UNTUK AJAX & KOLOM MESSAGE) ---
     public function storeDiscussion(Request $request) 
     { 
-        // 1. Simpan ke database
         $diskusi = Discussion::create([
             'course_id' => $request->course_id ?? Material::find($request->material_id)->course_id, 
             'material_id' => $request->material_id, 
             'user_id' => Session::get('user_id'), 
-            'message' => $request->message, // Gunakan 'message' sesuai database
+            'message' => $request->message,
             'parent_id' => $request->parent_id
         ]); 
         
-        // 2. Logika Notifikasi
         if ($request->parent_id) { 
             $parent = Discussion::find($request->parent_id); 
             if ($parent && $parent->user_id != Session::get('user_id')) { 
@@ -281,10 +351,8 @@ class MahasiswaController extends Controller
             } 
         } 
 
-        // 3. Load user untuk data JSON
         $diskusi->load('user');
 
-        // 4. KUNCI PERBAIKAN: Jika Request via AJAX, kembalikan JSON
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'status' => 'success',
@@ -293,12 +361,11 @@ class MahasiswaController extends Controller
                     'nama' => $diskusi->user->nama_lengkap,
                     'role' => $diskusi->user->role,
                     'foto' => $diskusi->user->foto_profil,
-                    'isi' => $diskusi->message // Kirim sebagai 'isi' agar dipahami Javascript d.isi
+                    'isi' => $diskusi->message
                 ]
             ]);
         }
 
-        // Fallback untuk submit form biasa
         return back()->with('success', 'Komentar terkirim.'); 
     }
 
