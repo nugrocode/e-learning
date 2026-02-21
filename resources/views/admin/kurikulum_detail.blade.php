@@ -95,7 +95,10 @@
                             <td class="px-4 py-3">
                                 <div class="d-flex align-items-center gap-3">
                                     @if($mk->gambar)
-                                        <img src="{{ asset('images/' . $mk->gambar) }}" class="w-10 h-10 rounded object-cover border">
+                                        {{-- HANYA BAGIAN INI YANG DIUBAH: Path ke storage/thumbnails/ --}}
+                                        <img src="{{ asset('storage/thumbnails/' . $mk->gambar) }}" 
+                                             class="w-10 h-10 rounded object-cover border"
+                                             onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
                                     @else
                                         <div class="w-10 h-10 rounded bg-gray-100 text-gray-400 flex items-center justify-center font-bold text-xs border">
                                             {{ substr($mk->nama_mk, 0, 2) }}
@@ -108,7 +111,7 @@
                                 </div>
                             </td>
                             
-                            {{-- Kolom Dosen (Langsung dari relasi User) --}}
+                            {{-- Kolom Dosen --}}
                             <td>
                                 @if($mk->dosen)
                                     <div class="d-flex align-items-center gap-2 p-1 bg-gray-50 rounded border border-gray-100 w-fit">

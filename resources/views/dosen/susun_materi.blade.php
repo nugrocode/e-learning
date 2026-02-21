@@ -75,16 +75,19 @@
                             {{ $m->deskripsi_materi }}
                         </div>
                         <div class="d-md-none d-flex gap-2 mt-2 flex-wrap">
-                            @if($m->kategori == 'quiz') <span class="badge bg-purple-50 text-purple-600 border border-purple-100 text-[9px] px-2">KUIS</span>
+                            {{-- Warna diubah ke yellow --}}
+                            @if($m->kategori == 'quiz') <span class="badge bg-yellow-50 text-yellow-700 border border-yellow-200 text-[9px] px-2">KUIS</span>
                             @else <span class="badge bg-blue-50 text-blue-600 border border-blue-100 text-[9px] px-2">VIDEO</span> @endif
                         </div>
                     </td>
                     <td class="d-none d-md-table-cell">
-                        @if($m->kategori == 'quiz') <span class="badge bg-purple-50 text-purple-600 border border-purple-100 rounded-pill px-3">KUIS</span>
+                        {{-- Warna diubah ke yellow --}}
+                        @if($m->kategori == 'quiz') <span class="badge bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-pill px-3">KUIS</span>
                         @else <span class="badge bg-blue-50 text-blue-600 border border-blue-100 rounded-pill px-3">VIDEO</span> @endif
                     </td>
                     <td class="d-none d-md-table-cell">
-                        @if($m->kategori == 'quiz') <small class="text-purple-500 font-bold">Bank Soal</small>
+                        {{-- Warna diubah ke yellow --}}
+                        @if($m->kategori == 'quiz') <small class="text-yellow-600 font-bold">Bank Soal</small>
                         @elseif($m->tipe_submission == 'file') <small class="text-green-600 font-bold"><i class="bi bi-google-drive"></i> G-Drive</small>
                         @elseif($m->tipe_submission == 'github') <small class="text-dark font-bold"><i class="bi bi-github"></i> GitHub</small>
                         @else <small class="text-gray-400">-</small> @endif
@@ -110,7 +113,7 @@
 {{-- MODAL EDIT: LAYOUT KIRI (SETTINGS) - KANAN (DESKRIPSI) --}}
 @foreach($materials as $m)
 <div class="modal fade" id="modalEdit{{ $m->id }}" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered"> {{-- Pakai modal-xl biar lebar --}}
+    <div class="modal-dialog modal-xl modal-dialog-centered"> 
         <form action="{{ url('/dosen/materi/'.$m->id) }}" method="POST" enctype="multipart/form-data" class="modal-content rounded-2xl border-0 shadow-lg">
             @csrf @method('PUT')
             <div class="modal-header border-0 p-4 pb-2">
@@ -164,10 +167,11 @@
                                     </div>
                                 </div>
                             @else
+                                {{-- Warna diubah ke yellow --}}
                                 <div class="text-center py-5">
-                                    <i class="bi bi-patch-question-fill text-purple-600 text-4xl mb-2 d-block"></i>
-                                    <h6 class="font-bold text-purple-800">Mode Kuis</h6>
-                                    <p class="text-xs text-purple-600 mb-0 px-4">Pengaturan soal, jawaban, dan bobot nilai dilakukan secara terpisah di menu <strong>Bank Soal</strong>.</p>
+                                    <i class="bi bi-patch-question-fill text-yellow-500 text-4xl mb-2 d-block"></i>
+                                    <h6 class="font-bold text-yellow-700">Mode Kuis</h6>
+                                    <p class="text-xs text-yellow-600 mb-0 px-4">Pengaturan soal, jawaban, dan bobot nilai dilakukan secara terpisah di menu <strong>Bank Soal</strong>.</p>
                                 </div>
                             @endif
                         </div>

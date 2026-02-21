@@ -7,17 +7,6 @@
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10">
 
-            {{-- HEADER HALAMAN --}}
-            <div class="d-flex align-items-center mb-4">
-                <a href="{{ url('/dosen/dashboard') }}" class="text-decoration-none text-secondary me-3">
-                    <i class="bi bi-arrow-left fs-4"></i>
-                </a>
-                <div>
-                    <h2 class="fw-bold text-dark m-0">Profil Dosen</h2>
-                    <p class="text-muted small m-0">Kelola informasi akun dan integrasi Cloud.</p>
-                </div>
-            </div>
-
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                 <form action="{{ url('/dosen/profil') }}" method="POST" enctype="multipart/form-data">
                     @csrf

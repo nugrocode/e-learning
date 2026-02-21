@@ -116,7 +116,10 @@ Route::middleware(['cek_role:dosen'])->group(function () {
 
     // 5. PENUGASAN & NILAI
     Route::get('/dosen/tugas', [DosenController::class, 'tugasIndex']);
-    Route::put('/dosen/nilai/{id}', [DosenController::class, 'nilaiUpdate']);
+    
+    // [FIX]: Menyesuaikan rute menjadi POST dan menyamakan penamaan URL dengan yang ada di tugas.blade.php
+    Route::post('/dosen/tugas/nilai/{id}', [DosenController::class, 'nilaiUpdate']);
+    
     Route::get('/dosen/tugas/download/{id}', [DosenController::class, 'downloadAssignment']); // <--- PENTING: Download File
 
     // 6. DISKUSI

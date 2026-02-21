@@ -5,18 +5,6 @@
 @section('content')
 <div class="row justify-content-center animate-fade-in-up">
     <div class="col-12 col-lg-10 col-xl-8">
-
-        {{-- Header Halaman --}}
-        <div class="d-flex align-items-center mb-4 animate-fade-in-up">
-            <a href="{{ url('/dashboard') }}" class="text-decoration-none text-gray-500 hover:text-blue-900 transition me-3">
-                <i class="bi bi-arrow-left text-2xl"></i>
-            </a>
-            <div>
-                <h2 class="font-bold text-2xl text-gray-800 m-0">Profil Saya</h2>
-                <p class="text-sm text-gray-500 m-0">Kelola informasi akun dan foto profil Anda.</p>
-            </div>
-        </div>
-
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             
             <form action="{{ url('/profil/update') }}" method="POST" enctype="multipart/form-data">

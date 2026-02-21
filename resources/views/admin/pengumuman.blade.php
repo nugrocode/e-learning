@@ -17,12 +17,6 @@
         </button>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success border-0 shadow-sm mb-4 rounded-lg d-flex align-items-center gap-2">
-            <i class="bi bi-check-circle-fill text-xl"></i> {{ session('success') }}
-        </div>
-    @endif
-
     {{-- TABEL LIST PENGUMUMAN --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="table-responsive">

@@ -3,7 +3,6 @@
 @section('title', $materi->judul_materi)
 
 @section('content')
-    {{-- NAVIGASI KEMBALI --}}
     <div class="mb-3 animate-fade-in-up">
         @php
             $backLink = Session::has('active_concentration_id') 
@@ -16,7 +15,6 @@
         </a>
     </div>
 
-    {{-- ALERT SYSTEM --}}
     @if(session('error'))
         <div class="alert alert-danger mb-3 p-2 text-xs md:text-sm shadow-sm border-0 d-flex align-items-center gap-2">
             <i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}
@@ -29,11 +27,9 @@
     @endif
 
     <div class="row g-3 md:g-4">
-        {{-- KOLOM KIRI: KONTEN UTAMA --}}
         <div class="col-lg-8">
             <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm h-100">
 
-                {{-- HEADER MATERI --}}
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3 border-b pb-3">
                     <h1 class="text-lg md:text-2xl font-bold text-gray-800 mb-0 leading-tight flex-grow-1">
                         {{ $materi->judul_materi }}
@@ -43,11 +39,9 @@
                     </span>
                 </div>
 
-                {{-- KONTEN (QUIZ / VIDEO) --}}
                 @if($materi->kategori == 'quiz')
 
                     @if($data_nilai && request('mode') != 'retake')
-                        {{-- Tampilan Skor Jika Sudah Mengerjakan --}}
                         <div class="text-center py-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                             <i class="bi bi-trophy-fill text-4xl md:text-5xl text-yellow-500 mb-2 block"></i>
                             <h1 class="text-3xl md:text-4xl font-bold text-blue-900 mb-1">{{ $data_nilai->skor }}</h1>
@@ -68,7 +62,6 @@
                             </div>
                         </div>
                     @else
-                        {{-- Form Kuis --}}
                         <form action="{{ url('/proses-kuis') }}" method="POST">
                             @csrf
                             <input type="hidden" name="material_id" value="{{ $materi->id }}">
@@ -100,12 +93,10 @@
                     @endif
 
                 @else
-                    {{-- VIDEO PLAYER --}}
                     <div class="ratio ratio-16x9 mb-3 rounded-xl overflow-hidden bg-black shadow-lg">
                         <iframe src="{{ $materi->video_url }}" allowfullscreen></iframe>
                     </div>
 
-                    {{-- TABS --}}
                     <ul class="nav nav-tabs mb-3 text-xs md:text-sm" id="materiTab" role="tablist">
                         <li class="nav-item"><button class="nav-link active fw-bold py-2 px-3" id="deskripsi-tab" data-bs-toggle="tab" data-bs-target="#deskripsi" type="button">Deskripsi</button></li>
                         <li class="nav-item"><button class="nav-link fw-bold py-2 px-3" id="tugas-tab" data-bs-toggle="tab" data-bs-target="#tugas" type="button">Tugas</button></li>
@@ -113,7 +104,6 @@
                     </ul>
 
                     <div class="tab-content">
-                        {{-- Tab Deskripsi --}}
                         <div class="tab-pane fade show active p-3 bg-gray-50 rounded border text-sm md:text-base" id="deskripsi">
                             <p class="text-gray-700 leading-relaxed mb-3">{{ $materi->deskripsi_materi ?? 'Tidak ada deskripsi.' }}</p>
                             @if($materi->file_lampiran)
@@ -126,7 +116,6 @@
                             @endif
                         </div>
 
-                        {{-- Tab Tugas --}}
                         <div class="tab-pane fade p-3 bg-gray-50 rounded border" id="tugas">
                             @if ($data_tugas)
                                 <div class="alert alert-success d-flex align-items-center border-0 shadow-sm text-xs md:text-sm">
@@ -140,18 +129,15 @@
                                 <div class="bg-white p-3 border rounded shadow-sm">
                                     <h6 class="font-bold mb-2 text-gray-800 text-sm">Upload Tugas</h6>
                                     
-                                    {{-- FORM PENGUMPULAN TUGAS --}}
                                     <form action="{{ url('/proses-tugas') }}" method="POST" enctype="multipart/form-data">
                                         @csrf 
                                         <input type="hidden" name="material_id" value="{{ $materi->id }}">
                                         
-                                        {{-- LOGIKA INPUT BERDASARKAN TIPE SUBMISSION --}}
                                         @if($materi->tipe_submission == 'github' || $materi->tipe_submission == 'link')
                                             <div class="mb-2">
                                                 <label class="form-label text-[10px] font-bold text-gray-500 uppercase">
                                                     <i class="bi bi-github"></i> Link Repository / Tugas
                                                 </label>
-                                                {{-- PERBAIKAN UTAMA DI SINI: name="link_github" --}}
                                                 <input type="url" name="link_github" class="form-control form-control-sm" placeholder="https://github.com/username/repo" required>
                                                 <div class="form-text text-[10px]">Pastikan link dapat diakses publik.</div>
                                             </div>
@@ -160,7 +146,6 @@
                                                 <label class="form-label text-[10px] font-bold text-gray-500 uppercase">
                                                     <i class="bi bi-file-earmark-arrow-up"></i> File (PDF/ZIP)
                                                 </label>
-                                                {{-- INPUT FILE --}}
                                                 <input type="file" name="file_tugas" class="form-control form-control-sm" required>
                                             </div>
                                         @endif
@@ -173,7 +158,6 @@
                             @endif
                         </div>
 
-                        {{-- Tab Diskusi --}}
                         <div class="tab-pane fade" id="diskusi">
                             <style>
                                 .forum-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
@@ -188,7 +172,6 @@
                             </style>
 
                             <div class="p-1">
-                                {{-- Form Diskusi Baru --}}
                                 <div class="bg-gray-50 p-3 rounded-xl border mb-3">
                                     <form class="formDiskusi" data-parent="0">
                                         @csrf <input type="hidden" name="course_id" value="{{ $course_id }}"> <input type="hidden" name="material_id" value="{{ $materi->id }}">
@@ -199,8 +182,7 @@
                                     </form>
                                 </div>
 
-                                {{-- List Diskusi --}}
-                                <div id="forumList" style="max-height: 500px; overflow-y: auto;" class="custom-scrollbar">
+                                <div id="forumList" style="max-height: 350px; overflow-y: auto;" class="custom-scrollbar">
                                     @forelse($diskusi as $chat)
                                         <div class="forum-card animate-fade-in-up" id="chat-{{ $chat->id }}">
                                             <div class="d-flex gap-2">
@@ -230,7 +212,6 @@
                                                         @endif
                                                     </div>
 
-                                                    {{-- Balasan --}}
                                                     <div class="reply-wrapper" id="wrapper-{{ $chat->id }}">
                                                         <div class="reply-container" id="replies-{{ $chat->id }}">
                                                             @foreach($chat->replies as $reply)
@@ -277,7 +258,6 @@
                         </div>
                     </div>
 
-                    {{-- TOMBOL LANJUT MATERI (HANYA MUNCUL DI MODE VIDEO) --}}
                     <div class="mt-4 text-end">
                         <form action="{{ url('/proses-progress') }}" method="POST">
                             @csrf <input type="hidden" name="material_id" value="{{ $materi->id }}"> <input type="hidden" name="course_id" value="{{ $course_id }}"> <input type="hidden" name="urutan" value="{{ $urutan }}">
@@ -290,8 +270,7 @@
             </div>
         </div>
 
-        {{-- KOLOM KANAN: PLAYLIST --}}
-        <div class="col-lg-4">
+        <div class="col-lg-4 d-none d-lg-block">
             <div class="d-block">
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden sticky-top" style="top: 90px; z-index: 10;">
                     <div class="p-3 bg-gray-800 text-white font-bold border-b d-flex justify-content-between align-items-center">
@@ -320,12 +299,64 @@
             </div>
         </div>
     </div>
+
+    <button class="btn btn-primary d-lg-none position-fixed shadow-lg d-flex align-items-center justify-content-center border-2 border-white" 
+            style="bottom: 40px; right: 20px; z-index: 1040; border-radius: 50%; width: 55px; height: 55px;"
+            type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasPlaylistMobile" aria-controls="offcanvasPlaylistMobile">
+        <i class="bi bi-music-note-list text-2xl"></i>
+    </button>
+
+    <div class="offcanvas offcanvas-end d-lg-none border-0" tabindex="-1" id="offcanvasPlaylistMobile" aria-labelledby="offcanvasPlaylistLabel" 
+         style="width: 85%; background-color: rgba(17, 24, 39, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+        
+        <div class="offcanvas-header border-b border-gray-700/50 text-white">
+            <h5 class="offcanvas-title font-bold text-sm" id="offcanvasPlaylistLabel">
+                <i class="bi bi-collection-play me-2"></i> Daftar Materi
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        
+        <div class="offcanvas-body p-0 custom-scrollbar">
+            @foreach($daftar_materi as $m)
+                @php $is_active = $m->urutan == $urutan; @endphp
+                <a href="{{ url('/belajar/' . $course_id . '/' . $m->urutan) }}" class="text-decoration-none">
+                    <div class="p-3 border-b border-gray-700/50 d-flex align-items-center gap-3 transition {{ $is_active ? 'bg-blue-900/40 border-l-4 border-blue-400' : 'hover:bg-white/10' }}">
+                        <div class="flex-shrink-0">
+                            <i class="bi {{ $m->kategori == 'quiz' ? 'bi-puzzle-fill text-purple-400' : 'bi-play-fill text-blue-400' }} text-xs"></i>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="mb-0 text-xs font-semibold text-truncate {{ $is_active ? 'text-white' : 'text-gray-300' }}">
+                                {{ $m->judul_materi }}
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+    </div>
 @endsection
 
+@push('styles')
+<style>
+    .offcanvas-backdrop {
+        background-color: rgba(0, 0, 0, 0.9) !important;
+    }
+    .offcanvas-backdrop.show {
+        opacity: 0.8 !important;
+        -webkit-backdrop-filter: blur(4px); 
+        backdrop-filter: blur(4px);
+    }
+</style>
+@endpush
+
 @push('scripts')
+    @php
+        $urlStorage = asset('storage/profiles') . '/';
+        $urlDefault = asset('images/logo_ukit.png');
+    @endphp
     <script>
-        const storageUrl = "{{ asset('storage/profiles') }}/";
-        const defaultUrl = "{{ asset('images/logo_ukit.png') }}";
+        const storageUrl = {!! json_encode($urlStorage) !!};
+        const defaultUrl = {!! json_encode($urlDefault) !!};
 
         function toggleForm(id) {
             const form = document.getElementById('replyForm-' + id);

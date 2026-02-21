@@ -82,7 +82,7 @@
             </div>
 
             {{-- MENU LIST (SCROLLABLE TANPA BAR) --}}
-            <div class="list-group list-group-flush mt-2 overflow-y-auto flex-grow-1 no-scrollbar pb-5">
+            <div class="list-group list-group-flush mt-2 overflow-y-auto flex-grow-1 no-scrollbar pb-5" id="scrollable-sidebar-menu">
                 
                 <p class="px-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-3">Utama</p>
                 <a href="{{ url('/admin/dashboard') }}" 
@@ -166,11 +166,12 @@
         </div>
     </div>
 
-    {{-- Script Toggle Sidebar --}}
+    {{-- Script Toggle Sidebar & Keep Scroll Position --}}
     <script>
         var el = document.getElementById("wrapper");
         var toggleButton = document.getElementById("menu-toggle");
         var sidebarClose = document.getElementById("sidebar-close");
+        var sidebarMenu = document.getElementById("scrollable-sidebar-menu"); // Target elemen scrollable
 
         function toggleSidebar() {
             el.classList.toggle("toggled");
@@ -199,6 +200,22 @@
                 }
             }
         });
+
+        // =========================================================================
+        // SCRIPT UNTUK MENYIMPAN POSISI SCROLL SIDEBAR MENGGUNAKAN SESSION STORAGE
+        // =========================================================================
+        if (sidebarMenu) {
+            // 1. Saat halaman dimuat, cek apakah ada posisi scroll yang tersimpan
+            const savedScrollPosition = sessionStorage.getItem("adminSidebarScroll");
+            if (savedScrollPosition) {
+                sidebarMenu.scrollTop = savedScrollPosition;
+            }
+
+            // 2. Setiap kali sidebar di-scroll, simpan posisi terbarunya
+            sidebarMenu.addEventListener("scroll", function() {
+                sessionStorage.setItem("adminSidebarScroll", sidebarMenu.scrollTop);
+            });
+        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')
