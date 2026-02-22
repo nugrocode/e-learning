@@ -48,7 +48,7 @@ class DosenController extends Controller
     // ==========================================================
     // 1. DASHBOARD & MAHASISWA
     // ==========================================================
-    public function dashboard()
+   public function dashboard()
     {
         $id = Session::get('user_id');
         $total_kelas = Course::where('dosen_id', $id)->count();
@@ -58,11 +58,77 @@ class DosenController extends Controller
             ->join('courses', 'materials.course_id', '=', 'courses.id')
             ->where('courses.dosen_id', $id)->distinct('progress.user_id')->count('progress.user_id');
             
+        // Data Penilaian Tugas
         $total_tugas = Submission::join('materials', 'submissions.material_id', '=', 'materials.id')
             ->join('courses', 'materials.course_id', '=', 'courses.id')
             ->where('courses.dosen_id', $id)->count();
             
-        return view('dosen.dashboard', compact('total_kelas', 'total_mhs', 'total_tugas', 'kelas_list'));
+        $sudah_dinilai = Submission::join('materials', 'submissions.material_id', '=', 'materials.id')
+            ->join('courses', 'materials.course_id', '=', 'courses.id')
+            ->where('courses.dosen_id', $id)->whereNotNull('nilai')->count();
+            
+        $belum_dinilai = $total_tugas - $sudah_dinilai;
+
+        // Data Total Diskusi
+        $total_diskusi = Discussion::join('materials', 'discussions.material_id', '=', 'materials.id')
+            ->join('courses', 'materials.course_id', '=', 'courses.id')
+            ->where('courses.dosen_id', $id)->count();
+
+        // 1. DATA CHART: Status Penilaian
+        $chart_penilaian = [
+            'dinilai' => $sudah_dinilai,
+            'pending' => $belum_dinilai
+        ];
+
+        // 2. DATA CHART: Kepadatan Materi per Kelas
+        $chart_kepadatan = [
+            'labels' => $kelas_list->pluck('nama_mk')->toArray(),
+            'data' => $kelas_list->pluck('materials_count')->toArray()
+        ];
+
+        // 3. DATA CHART: Komposisi Tipe Materi
+        $video_count = Material::whereHas('course', function($q) use($id) { $q->where('dosen_id', $id); })->where('kategori', 'video')->whereNull('tipe_submission')->count();
+        $tugas_count = Material::whereHas('course', function($q) use($id) { $q->where('dosen_id', $id); })->whereNotNull('tipe_submission')->count();
+        $kuis_count = Material::whereHas('course', function($q) use($id) { $q->where('dosen_id', $id); })->where('kategori', 'quiz')->count();
+        
+        $chart_tipe = [
+            'video' => $video_count,
+            'tugas' => $tugas_count,
+            'kuis' => $kuis_count
+        ];
+
+        // 4. DATA CHART: Tren Keaktifan (Tugas & Diskusi 6 Bulan Terakhir)
+        $months = [];
+        $tugas_trend = [];
+        $diskusi_trend = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = \Carbon\Carbon::today()->startOfMonth()->subMonths($i);
+            $months[] = $date->translatedFormat('M Y');
+
+            $tugas_trend[] = Submission::join('materials', 'submissions.material_id', '=', 'materials.id')
+                ->join('courses', 'materials.course_id', '=', 'courses.id')
+                ->where('courses.dosen_id', $id)
+                ->whereYear('submissions.created_at', $date->year)
+                ->whereMonth('submissions.created_at', $date->month)->count();
+
+            $diskusi_trend[] = Discussion::join('materials', 'discussions.material_id', '=', 'materials.id')
+                ->join('courses', 'materials.course_id', '=', 'courses.id')
+                ->where('courses.dosen_id', $id)
+                ->whereYear('discussions.created_at', $date->year)
+                ->whereMonth('discussions.created_at', $date->month)->count();
+        }
+
+        $chart_trend = [
+            'labels' => $months,
+            'tugas' => $tugas_trend,
+            'diskusi' => $diskusi_trend
+        ];
+            
+        return view('dosen.dashboard', compact(
+            'total_kelas', 'total_mhs', 'belum_dinilai', 'total_diskusi',
+            'chart_penilaian', 'chart_kepadatan', 'chart_tipe', 'chart_trend'
+        ));
     }
 
     public function mahasiswaIndex(Request $request)

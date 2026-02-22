@@ -7,29 +7,22 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Services\GeminiService; // [Inject Service AI]
-
-// Import Models
+use Carbon\Carbon;
+use App\Services\GeminiService;
 use App\Models\User;
 use App\Models\Concentration;
 use App\Models\Course;
 use App\Models\Announcement;
+use App\Models\Material;
 
 class AdminController extends Controller
 {
     protected $gemini;
 
-    /**
-     * Inject GeminiService untuk fitur AI Admin
-     */
     public function __construct(GeminiService $geminiService)
     {
         $this->gemini = $geminiService;
     }
-
-    // ==========================================================
-    // 1. DASHBOARD & UTAMA
-    // ==========================================================
 
     public function dashboard() {
         $total_mhs = User::where('role', 'mahasiswa')->count();
@@ -38,24 +31,64 @@ class AdminController extends Controller
         $total_mk = Course::count();
         
         $recent_users = User::latest()->take(5)->get();
-        
-        return view('admin.dashboard', compact('total_mhs', 'total_dosen', 'total_konsentrasi', 'total_mk', 'recent_users'));
+
+        $chart_users = [
+            'mahasiswa' => $total_mhs,
+            'dosen' => $total_dosen,
+            'admin' => User::where('role', 'admin')->count()
+        ];
+
+        $months = [];
+        $mhs_trend = [];
+        $dosen_trend = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::today()->startOfMonth()->subMonths($i);
+            $months[] = $date->translatedFormat('M Y');
+
+            $mhs_trend[] = User::where('role', 'mahasiswa')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)->count();
+
+            $dosen_trend[] = User::where('role', 'dosen')
+                ->whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)->count();
+        }
+        $chart_trend = [
+            'labels' => $months,
+            'mahasiswa' => $mhs_trend,
+            'dosen' => $dosen_trend
+        ];
+
+        $concentrations = Concentration::withCount('courses')->get();
+        $chart_prodi = [
+            'labels' => $concentrations->pluck('nama_konsentrasi')->toArray(),
+            'data' => $concentrations->pluck('courses_count')->toArray()
+        ];
+
+        $video_count = Material::where('kategori', 'video')->whereNull('tipe_submission')->count();
+        $tugas_count = Material::whereNotNull('tipe_submission')->count();
+        $quiz_count = Material::where('kategori', 'quiz')->count();
+
+        $chart_materi = [
+            'video' => $video_count,
+            'tugas' => $tugas_count,
+            'kuis' => $quiz_count
+        ];
+
+        return view('admin.dashboard', compact(
+            'total_mhs', 'total_dosen', 'total_konsentrasi', 'total_mk', 'recent_users',
+            'chart_users', 'chart_trend', 'chart_prodi', 'chart_materi'
+        ));
     }
 
-
-    // ==========================================================
-    // 2. MANAJEMEN PENGGUNA (USERS)
-    // ==========================================================
-
     public function usersIndex(Request $request) {
-        // Default redirect jika tidak ada role
         if (!$request->has('role')) {
             return redirect('/admin/users?role=mahasiswa');
         }
 
         $query = User::query();
 
-        // Fitur Pencarian
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -67,7 +100,6 @@ class AdminController extends Controller
         $query->where('role', $request->role);
         $users = $query->latest()->paginate(10)->withQueryString();
 
-        // Statistik Header
         $stats = [
             'total' => User::count(),
             'dosen' => User::where('role', 'dosen')->count(),
@@ -96,7 +128,7 @@ class AdminController extends Controller
         User::create([
             'nim_nidn' => $request->nim,
             'nama_lengkap' => $request->nama_lengkap,
-            'password' => md5($request->password), // MD5 Sesuai legacy code
+            'password' => md5($request->password), 
             'role' => $request->role,
             'foto_profil' => $filename
         ]);
@@ -142,7 +174,6 @@ class AdminController extends Controller
 
         $user = User::findOrFail($id);
 
-        // Hapus Data Terkait (Clean Up)
         DB::table('progress')->where('user_id', $id)->delete();
         DB::table('submissions')->where('user_id', $id)->delete();
         DB::table('quiz_scores')->where('user_id', $id)->delete();
@@ -157,11 +188,6 @@ class AdminController extends Controller
         $user->delete();
         return back()->with('success', 'Pengguna berhasil dihapus.');
     }
-
-
-    // ==========================================================
-    // 3. MANAJEMEN PENGUMUMAN
-    // ==========================================================
 
     public function pengumumanIndex() { 
         $pengumuman = Announcement::latest()->get(); 
@@ -183,15 +209,8 @@ class AdminController extends Controller
         return back()->with('success', 'Pengumuman dihapus.'); 
     }
 
-
-    // ==========================================================
-    // 4. MASTER DATA (PRODI & BANK MK)
-    // ==========================================================
-
-    // --- KONSENTRASI / PRODI ---
     public function konsentrasiIndex() {
         $konsentrasi = Concentration::all();
-        // Hitung total MK
         foreach($konsentrasi as $k) { 
             $k->total_mk = $k->courses()->count(); 
         }
@@ -233,7 +252,6 @@ class AdminController extends Controller
         return back()->with('success', 'Prodi dihapus.'); 
     }
 
-    // --- BANK MATA KULIAH ---
     public function bankIndex() {
         $courses = Course::with('dosen')->latest()->get();
         $dosens = User::where('role', 'dosen')->get();
@@ -287,15 +305,10 @@ class AdminController extends Controller
         $c = Course::findOrFail($id);
         if ($c->gambar) Storage::disk('public')->delete('thumbnails/' . $c->gambar);
         
-        $c->concentrations()->detach(); // Lepas hubungan dengan prodi
+        $c->concentrations()->detach();
         $c->delete(); 
         return back()->with('success', 'Mata Kuliah dihapus permanen.');
     }
-
-
-    // ==========================================================
-    // 5. MANAJEMEN KURIKULUM & DISTRIBUSI (AI POWERED)
-    // ==========================================================
 
     public function kurikulumIndex() {
         $konsentrasi = Concentration::all();
@@ -307,14 +320,12 @@ class AdminController extends Controller
         $konsentrasi = Concentration::findOrFail($id);
         $dosens = User::where('role', 'dosen')->get();
 
-        // MK yang sudah diurutkan (Semester 1 dst)
         $courses = $konsentrasi->courses()
             ->with('dosen') 
             ->wherePivot('urutan', '>', 0)
             ->orderBy('concentration_course.urutan', 'asc') 
             ->get();
         
-        // MK yang baru masuk (Pending Sort)
         $new_courses = $konsentrasi->courses()
             ->wherePivot('urutan', 0)
             ->get();
@@ -328,10 +339,8 @@ class AdminController extends Controller
             'nama_mk' => 'required',
         ]);
 
-        // Cek apakah MK sudah ada di Bank Data
         $course = Course::where('nama_mk', $request->nama_mk)->first();
 
-        // Jika belum ada, buat baru di Bank Data
         if (!$course) {
             $request->validate(['dosen_id' => 'required']);
             $filename = null;
@@ -349,7 +358,6 @@ class AdminController extends Controller
             ]);
         }
 
-        // Cek relasi agar tidak duplikat di prodi yang sama
         $exists = DB::table('concentration_course')
             ->where('concentration_id', $request->concentration_id)
             ->where('course_id', $course->id)
@@ -357,7 +365,7 @@ class AdminController extends Controller
         
         if (!$exists) {
             $konsentrasi = Concentration::find($request->concentration_id);
-            $konsentrasi->courses()->attach($course->id, ['urutan' => 0]); // Urutan 0 = Pending
+            $konsentrasi->courses()->attach($course->id, ['urutan' => 0]);
             return back()->with('success', 'Mata Kuliah ditambahkan! Klik "Smart Insert" untuk menyisipkannya.');
         }
 
@@ -365,7 +373,6 @@ class AdminController extends Controller
     }
 
     public function courseUpdate(Request $request, $id) {
-        // Wrapper untuk update MK (sama seperti di Bank MK)
         return $this->bankUpdate($request, $id);
     }
 
@@ -380,14 +387,12 @@ class AdminController extends Controller
         return back()->with('error', 'Gagal menghapus.');
     }
 
-    // --- FITUR AI: AUTO DISTRIBUTE ---
     public function autoDistribute() {
         $concentrations = Concentration::all();
         $courses = Course::all(); 
 
         if ($courses->isEmpty()) return back()->with('error', 'Belum ada data Mata Kuliah.');
 
-        // Format data untuk Prompt AI
         $listKonsentrasi = $concentrations->map(function($c) { return "ID:{$c->id}={$c->nama_konsentrasi}"; })->implode(", ");
         $listCourses = $courses->map(function($c) { return "ID:{$c->id}={$c->nama_mk}(" . Str::limit($c->deskripsi, 50) . ")"; })->implode("\n");
 
@@ -404,14 +409,12 @@ class AdminController extends Controller
             OUTPUT: JSON Array valid saja: [{\"course_id\": 1, \"target_concentration_ids\": [1, 2]}]
         ";
 
-        // Panggil Service Gemini (Mode JSON)
         $mappings = $this->gemini->ask($prompt, true);
 
         if (is_array($mappings)) {
             $count = 0;
             foreach ($mappings as $map) {
                 foreach ($map['target_concentration_ids'] as $concId) {
-                    // Cek duplikasi sebelum insert
                     $exists = DB::table('concentration_course')
                         ->where('concentration_id', $concId)
                         ->where('course_id', $map['course_id'])
@@ -432,7 +435,6 @@ class AdminController extends Controller
         return back()->with('error', 'AI tidak memberikan respons valid.');
     }
 
-    // --- FITUR AI: RESET & SORT ---
     public function resetKurikulum($concentration_id) {
         $konsentrasi = Concentration::findOrFail($concentration_id);
         $courses = $konsentrasi->courses()->get();
@@ -453,13 +455,10 @@ class AdminController extends Controller
         return back()->with('error', 'Gagal memproses AI.');
     }
 
-    // --- FITUR AI: SMART INSERT ---
     public function updateKurikulum($concentration_id) {
         $konsentrasi = Concentration::findOrFail($concentration_id);
         
-        // Ambil MK yang sudah urut
         $existing = $konsentrasi->courses()->wherePivot('urutan', '>', 0)->orderBy('pivot_urutan', 'asc')->get();
-        // Ambil MK baru (urutan 0)
         $pending = $konsentrasi->courses()->wherePivot('urutan', 0)->get();
 
         if ($pending->isEmpty()) return back()->with('error', 'Tidak ada MK baru yang perlu disisipkan.');
@@ -473,7 +472,6 @@ class AdminController extends Controller
             if ($targetId !== null) {
                 $targetUrutan = 0;
                 
-                // Cari urutan target
                 if ($targetId != 0) {
                     $ref = DB::table('concentration_course')
                         ->where('concentration_id', $concentration_id)
@@ -482,16 +480,13 @@ class AdminController extends Controller
                     if ($ref) $targetUrutan = $ref->urutan;
                 }
                 
-                // Geser semua urutan setelah target +1
                 DB::table('concentration_course')
                     ->where('concentration_id', $concentration_id)
                     ->where('urutan', '>', $targetUrutan)
                     ->increment('urutan');
                 
-                // Masukkan MK baru di slot yang kosong
                 $konsentrasi->courses()->updateExistingPivot($newCourse->id, ['urutan' => $targetUrutan + 1]);
                 
-                // Refresh list existing untuk iterasi berikutnya
                 $existing = $konsentrasi->courses()->wherePivot('urutan', '>', 0)->orderBy('pivot_urutan', 'asc')->get();
             }
         }

@@ -1,204 +1,228 @@
 @extends('layouts.dosen')
 
-@section('title', 'Dashboard Dosen')
+@section('title', 'Dashboard Analytics Dosen')
 
 @section('content')
-    {{-- BAGIAN 1: HEADER & SAMBUTAN --}}
-    <div class="row mb-4 animate-fade-in-up">
-        <div class="col-12">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 d-flex flex-column flex-md-row justify-content-between align-items-center gap-4 relative overflow-hidden">
-                
-                {{-- Teks Sambutan --}}
-                <div class="z-10 relative">
-                    <h1 class="font-bold text-2xl text-gray-800 mb-1">
-                        Halo, {{ session('nama') }}! <span class="text-2xl">👋</span>
-                    </h1>
-                    <p class="text-gray-500 text-sm mb-0">
-                        Siap mengajar hari ini? Ada <strong class="text-blue-600">{{ $total_kelas }} Kelas</strong> yang menunggu aktivitas Anda.
-                    </p>
-                </div>
-
-                {{-- Quick Actions (Tombol Cepat) --}}
-                <div class="d-flex gap-2 z-10 relative">
-                    <a href="{{ url('/dosen/kelas') }}" class="btn btn-outline-secondary btn-sm rounded-lg fw-bold px-3 shadow-sm bg-white">
-                        <i class="bi bi-journal-bookmark me-1"></i> Lihat Kelas
-                    </a>
-                    <a href="{{ url('/dosen/materi') }}" class="btn btn-primary btn-sm rounded-lg fw-bold px-3 shadow-sm bg-blue-600 border-0">
-                        <i class="bi bi-plus-lg me-1"></i> Susun Materi Baru
-                    </a>
-                </div>
-
-                {{-- Dekorasi Background Abstrak --}}
-                <div class="absolute right-0 top-0 h-full w-48 bg-gradient-to-l from-blue-50 to-transparent opacity-50 rounded-r-xl"></div>
-                <div class="absolute -right-6 -bottom-8 text-9xl text-blue-100 opacity-20 transform rotate-12">
-                    <i class="bi bi-person-workspace"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- BAGIAN 2: STATISTIK UTAMA (Cards) --}}
-    <div class="row g-4 mb-5">
-        
-        {{-- Card 1: Total Mahasiswa --}}
-        <div class="col-12 col-md-4">
-            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm h-100 hover:shadow-md transition-all duration-300 group">
-                <div class="d-flex align-items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        <i class="bi bi-people-fill text-lg"></i>
-                    </div>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Total Mahasiswa</span>
-                </div>
-                <div class="d-flex align-items-end justify-content-between">
-                    <h3 class="font-bold text-3xl text-gray-800 m-0">{{ $total_mhs }}</h3>
-                    <span class="text-[10px] text-green-500 bg-green-50 px-2 py-1 rounded-full font-bold">
-                        <i class="bi bi-arrow-up-short"></i> Aktif
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        {{-- Card 2: Tugas Belum Dinilai (PENTING) --}}
-        <div class="col-12 col-md-4">
-            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm h-100 hover:shadow-md transition-all duration-300 group cursor-pointer" onclick="window.location='{{ url('/dosen/tugas') }}'">
-                <div class="d-flex align-items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                        <i class="bi bi-pencil-square text-lg"></i>
-                    </div>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Tugas Masuk</span>
-                </div>
-                <div class="d-flex align-items-end justify-content-between">
-                    <h3 class="font-bold text-3xl text-gray-800 m-0">{{ $total_tugas }}</h3>
-                    @if($total_tugas > 0)
-                        <span class="text-[10px] text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-bold animate-pulse">
-                            Perlu Dinilai
-                        </span>
-                    @else
-                        <span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-full font-bold">
-                            Semua Beres
-                        </span>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Card 3: Total Materi --}}
-        <div class="col-12 col-md-4">
-            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm h-100 hover:shadow-md transition-all duration-300 group">
-                <div class="d-flex align-items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                        <i class="bi bi-collection-play-fill text-lg"></i>
-                    </div>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Bank Materi</span>
-                </div>
-                <div class="d-flex align-items-end justify-content-between">
-                    {{-- Asumsi $total_materi dihitung di controller --}}
-                    <h3 class="font-bold text-3xl text-gray-800 m-0">{{ $total_materi ?? 0 }}</h3>
-                    <span class="text-[10px] text-purple-500 bg-purple-50 px-2 py-1 rounded-full font-bold">
-                        Modul & Video
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- BAGIAN 3: OVERVIEW KELAS (Grid Modern) --}}
-    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
-        <div>
-            <h5 class="font-bold text-gray-800 m-0">Kelas Ajar Anda</h5>
-            <p class="text-xs text-gray-500 m-0 mt-1">Kelola materi dan pantau mahasiswa per kelas.</p>
-        </div>
-        <a href="{{ url('/dosen/kelas') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 text-decoration-none transition">
-            Lihat Semua <i class="bi bi-arrow-right"></i>
-        </a>
-    </div>
-
-    <div class="row g-4">
-        @forelse($kelas_list->take(3) as $k) {{-- Tampilkan 3 kelas terbaru saja agar dashboard rapi --}}
-            @php
-                $progress = min(($k->materials_count / 14) * 100, 100); // Asumsi 14 pertemuan
-                $colors = ['blue', 'indigo', 'teal', 'purple'];
-                $color = $colors[$k->id % 4]; // Rotasi warna
-            @endphp
-
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-100 d-flex flex-column hover:-translate-y-1 transition-transform duration-300 relative group">
-                    
-                    {{-- Garis Indikator Warna di Kiri --}}
-                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-{{ $color }}-500"></div>
-
-                    <div class="p-4 flex-grow-1">
-                        {{-- Header Kelas --}}
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <span class="badge bg-{{ $color }}-50 text-{{ $color }}-600 border border-{{ $color }}-100 rounded-lg px-2 py-1 text-[10px]">
-                                {{ $k->concentrations->first()->nama_konsentrasi ?? 'Umum' }}
-                            </span>
-                            <div class="dropdown">
-                                <button class="btn btn-link text-gray-400 p-0" type="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 text-sm">
-                                    <li><a class="dropdown-item py-2" href="{{ url('/dosen/kelas/'.$k->id) }}"><i class="bi bi-gear me-2"></i> Kelola Kelas</a></li>
-                                    <li><a class="dropdown-item py-2" href="{{ url('/dosen/mahasiswa?kelas='.$k->id) }}"><i class="bi bi-people me-2"></i> Lihat Mahasiswa</a></li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        {{-- Judul Kelas --}}
-                        <h5 class="font-bold text-gray-800 text-lg mb-1 group-hover:text-{{ $color }}-600 transition-colors">
-                            <a href="{{ url('/dosen/kelas/'.$k->id) }}" class="text-decoration-none text-reset stretched-link">
-                                {{ $k->nama_mk }}
-                            </a>
-                        </h5>
-                        <p class="text-xs text-gray-500 line-clamp-2 mb-4">
-                            {{ $k->deskripsi ?? 'Tidak ada deskripsi singkat.' }}
-                        </p>
-
-                        {{-- Statistik Mini --}}
-                        <div class="d-flex gap-3 border-t border-dashed pt-3">
-                            <div class="d-flex align-items-center gap-1 text-xs text-gray-500">
-                                <i class="bi bi-file-earmark-text text-{{ $color }}-500"></i>
-                                <span class="font-bold text-gray-700">{{ $k->materials_count }}</span> Materi
-                            </div>
-                            <div class="d-flex align-items-center gap-1 text-xs text-gray-500">
-                                <i class="bi bi-person text-{{ $color }}-500"></i>
-                                <span class="font-bold text-gray-700">{{ $k->students_count ?? 0 }}</span> Mhs
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Progress Bar Bawah --}}
-                    <div class="bg-gray-50 px-4 py-2 border-top border-gray-100">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="text-[10px] text-gray-400 fw-bold">KELENGKAPAN MATERI</span>
-                            <span class="text-[10px] text-{{ $color }}-600 fw-bold">{{ round($progress) }}%</span>
-                        </div>
-                        <div class="progress h-1.5 bg-gray-200 rounded-full w-100">
-                            <div class="progress-bar bg-{{ $color }}-500 rounded-full" role="progressbar" style="width: {{ $progress }}%"></div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        @empty
-            <div class="col-12">
-                <div class="text-center py-5 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-                    <i class="bi bi-journal-x text-4xl text-gray-300 mb-3 d-block"></i>
-                    <h6 class="text-gray-500 font-bold">Belum Ada Kelas Aktif</h6>
-                    <p class="text-xs text-gray-400 mb-0">Hubungi Admin Akademik untuk plotting jadwal Anda.</p>
-                </div>
-            </div>
-        @endforelse
-    </div>
-
-    {{-- Script Animasi Simpel --}}
-    @push('styles')
     <style>
-        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .apexcharts-tooltip {
+            background: #ffffff; border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+        }
+        .stat-card {
+            border-radius: 1rem; background: #fff; border: 1px solid #f1f5f9;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
     </style>
-    @endpush
+
+    {{-- HEADER ANALITIK PROFESIONAL --}}
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+        <div>
+            <h3 class="font-bold text-gray-800 mb-1 tracking-tight">Akademik & Evaluasi</h3>
+            <p class="text-gray-500 text-sm m-0">Ringkasan performa kelas dan keaktifan mahasiswa Anda.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-white text-gray-600 border border-gray-200 shadow-sm px-3 py-2 rounded-pill text-xs font-medium d-flex align-items-center">
+                <i class="bi bi-calendar3 text-yellow-500 me-2"></i> 
+                {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+            </span>
+        </div>
+    </div>
+
+    {{-- STATISTIK CARDS (KPI DOSEN) --}}
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="stat-card p-4 h-100 d-flex flex-column justify-content-center">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-xl">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                    </div>
+                </div>
+                <h3 class="font-bold text-3xl text-gray-800 m-0 leading-none">{{ number_format($total_kelas) }}</h3>
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mt-2 mb-0">Kelas Diampu</p>
+            </div>
+        </div>
+
+        <div class="col-6 col-xl-3">
+            <div class="stat-card p-4 h-100 d-flex flex-column justify-content-center">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600 text-xl">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <h3 class="font-bold text-3xl text-gray-800 m-0 leading-none">{{ number_format($total_mhs) }}</h3>
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mt-2 mb-0">Total Mahasiswa</p>
+            </div>
+        </div>
+
+        <div class="col-6 col-xl-3">
+            <div class="stat-card p-4 h-100 d-flex flex-column justify-content-center relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500 text-xl z-10">
+                        <i class="bi bi-inbox-fill"></i>
+                    </div>
+                    @if($belum_dinilai > 0)
+                        <span class="badge bg-red-500 text-white text-[10px] px-2 py-1 rounded-pill shadow-sm z-10 animate-pulse">Perlu Aksi</span>
+                    @endif
+                </div>
+                <h3 class="font-bold text-3xl {{ $belum_dinilai > 0 ? 'text-red-600' : 'text-gray-800' }} m-0 leading-none z-10">{{ number_format($belum_dinilai) }}</h3>
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mt-2 mb-0 z-10">Tugas Pending</p>
+            </div>
+        </div>
+
+        <div class="col-6 col-xl-3">
+            <div class="stat-card p-4 h-100 d-flex flex-column justify-content-center">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center text-yellow-600 text-xl">
+                        <i class="bi bi-chat-dots-fill"></i>
+                    </div>
+                </div>
+                <h3 class="font-bold text-3xl text-gray-800 m-0 leading-none">{{ number_format($total_diskusi) }}</h3>
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mt-2 mb-0">Total Diskusi</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- BARIS GRAFIK 1: Tren Keaktifan & Status Penilaian --}}
+    <div class="row g-3 mb-4">
+        {{-- Area Chart: Tren Keaktifan --}}
+        <div class="col-12 col-lg-8">
+            <div class="stat-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h6 class="font-bold text-gray-800 mb-0">Tren Keaktifan Mahasiswa</h6>
+                        <p class="text-[11px] text-gray-400 mb-0">Frekuensi pengumpulan tugas dan pertanyaan (6 Bulan)</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                        <i class="bi bi-activity text-sm"></i>
+                    </div>
+                </div>
+                <div id="chartTrend" class="chart-container"></div>
+            </div>
+        </div>
+
+        {{-- Donut Chart: Status Penilaian Tugas --}}
+        <div class="col-12 col-lg-4">
+            <div class="stat-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h6 class="font-bold text-gray-800 mb-0">Status Penilaian Tugas</h6>
+                        <p class="text-[11px] text-gray-400 mb-0">Progress pemeriksaan tugas</p>
+                    </div>
+                    <a href="{{ url('/dosen/tugas') }}" class="w-8 h-8 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600 hover:bg-yellow-100 transition">
+                        <i class="bi bi-arrow-right text-sm"></i>
+                    </a>
+                </div>
+                <div id="chartPenilaian" class="d-flex justify-content-center align-items-center" style="min-height: 280px;"></div>
+            </div>
+        </div>
+    </div>
+
+    {{-- BARIS GRAFIK 2: Kepadatan Materi & Tipe Konten --}}
+    <div class="row g-3 pb-4">
+        {{-- Bar Chart: Kepadatan Materi --}}
+        <div class="col-12 col-lg-8">
+            <div class="stat-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h6 class="font-bold text-gray-800 mb-0">Kepadatan Materi per Kelas</h6>
+                        <p class="text-[11px] text-gray-400 mb-0">Perbandingan jumlah materi di tiap mata kuliah</p>
+                    </div>
+                    <a href="{{ url('/dosen/materi') }}" class="btn btn-sm btn-light text-[11px] font-bold text-gray-500 rounded-lg hover:text-gray-800">
+                        Kelola Materi <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div id="chartKepadatan" class="chart-container"></div>
+            </div>
+        </div>
+
+        {{-- Pie Chart: Analisis Tipe Konten Dosen --}}
+        <div class="col-12 col-lg-4">
+            <div class="stat-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h6 class="font-bold text-gray-800 mb-0">Gaya Mengajar Anda</h6>
+                        <p class="text-[11px] text-gray-400 mb-0">Rasio metode pembelajaran</p>
+                    </div>
+                </div>
+                <div id="chartMateri" class="d-flex justify-content-center align-items-center" style="min-height: 280px;"></div>
+            </div>
+        </div>
+    </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const commonOptions = { fontFamily: 'Poppins, sans-serif', toolbar: { show: false } };
+
+    // 1. CHART TREN KEAKTIFAN (Area Chart)
+    const trendOptions = {
+        series: [
+            { name: 'Tugas Terkumpul', data: @json($chart_trend['tugas']) },
+            { name: 'Diskusi Masuk', data: @json($chart_trend['diskusi']) }
+        ],
+        chart: { type: 'area', height: 300, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'Poppins, sans-serif' },
+        colors: ['#eab308', '#3b82f6'], 
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05, stops: [0, 90, 100] } },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 3 },
+        xaxis: { 
+            categories: @json($chart_trend['labels']),
+            axisBorder: { show: false }, axisTicks: { show: false },
+            labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 500 } }
+        },
+        yaxis: { labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 500 } } },
+        legend: { position: 'top', horizontalAlign: 'right', fontWeight: 600, fontSize: '12px' },
+        grid: { borderColor: '#f8fafc', strokeDashArray: 4 }
+    };
+    new ApexCharts(document.querySelector("#chartTrend"), trendOptions).render();
+
+    // 2. CHART STATUS PENILAIAN (Donut Chart)
+    const penilaianOptions = {
+        series: [@json($chart_penilaian['dinilai']), @json($chart_penilaian['pending'])],
+        labels: ['Sudah Dinilai', 'Menunggu Penilaian'],
+        chart: { type: 'donut', height: 290, fontFamily: 'Poppins, sans-serif' },
+        colors: ['#22c55e', '#ef4444'], 
+        plotOptions: {
+            pie: { donut: { size: '75%', labels: { show: true, name: { fontSize: '11px', color: '#64748b', fontWeight: 600 }, value: { fontSize: '28px', fontWeight: 'bold', color: '#1e293b' }, total: { show: true, label: 'Total Tugas', color: '#94a3b8', fontWeight: 600 } } } }
+        },
+        dataLabels: { enabled: false },
+        legend: { position: 'bottom', fontWeight: 500, fontSize: '12px', markers: { radius: 12 } }, stroke: { width: 0 }
+    };
+    new ApexCharts(document.querySelector("#chartPenilaian"), penilaianOptions).render();
+
+    // 3. CHART KEPADATAN MATERI (Bar Chart)
+    const kepadatanOptions = {
+        series: [{ name: 'Total Materi', data: @json($chart_kepadatan['data']) }],
+        chart: { type: 'bar', height: 300, toolbar: { show: false }, fontFamily: 'Poppins, sans-serif' },
+        colors: ['#eab308'], 
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '35%', distributed: true } },
+        dataLabels: { enabled: false },
+        xaxis: { 
+            categories: @json($chart_kepadatan['labels']),
+            labels: { style: { colors: '#64748b', fontSize: '10px', fontWeight: 500 }, trim: true, hideOverlappingLabels: false }
+        },
+        yaxis: { labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 500 } } },
+        grid: { borderColor: '#f8fafc', strokeDashArray: 4 }, legend: { show: false } 
+    };
+    new ApexCharts(document.querySelector("#chartKepadatan"), kepadatanOptions).render();
+
+    // 4. CHART TIPE MATERI DOSEN (Pie Chart) - NAMA LABEL DAN SUSUNAN DIPERBAIKI
+    const materiOptions = {
+        series: [@json($chart_tipe['video']), @json($chart_tipe['tugas']), @json($chart_tipe['kuis'])],
+        labels: ['Video (Pasif)', 'Video + Tugas', 'Soal Kuis'],
+        chart: { type: 'pie', height: 280, fontFamily: 'Poppins, sans-serif' },
+        colors: ['#3b82f6', '#22c55e', '#eab308'], // Blue=Video Pasif, Green=Video+Tugas, Yellow=Kuis
+        dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: 'bold' }, dropShadow: { enabled: false } },
+        legend: { position: 'bottom', fontWeight: 500, fontSize: '12px', markers: { radius: 12 } }, stroke: { width: 3, colors: ['#ffffff'] }
+    };
+    new ApexCharts(document.querySelector("#chartMateri"), materiOptions).render();
+
+});
+</script>
+@endpush
