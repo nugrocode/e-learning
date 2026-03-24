@@ -201,10 +201,13 @@
         <form action="{{ url('/dosen/materi') }}" method="POST" enctype="multipart/form-data" class="modal-content rounded-2xl border-0 shadow-lg">
             @csrf
             <input type="hidden" name="course_id" value="{{ $course->id }}">
-            <div class="modal-header bg-blue-600 text-white border-0 p-4 pb-3">
-                <h5 class="font-bold">Tambah Materi Baru</h5>
+            
+            {{-- PERUBAHAN 1: Header menggunakan warna sidebar (#2d3748) dan teks judul warna kuning navbar --}}
+            <div class="modal-header bg-[#2d3748] text-white border-0 p-4 pb-3">
+                <h5 class="font-bold text-[#ffc107]">Tambah Materi Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+            
             <div class="modal-body p-4 pt-3">
                 
                 {{-- JUDUL & TIPE --}}
@@ -229,7 +232,8 @@
                             
                             {{-- FORM VIDEO (DEFAULT) --}}
                             <div id="add-video-fields">
-                                <h6 class="text-xs font-bold text-blue-600 uppercase mb-3 border-bottom pb-2">Konfigurasi Video</h6>
+                                {{-- PERUBAHAN 2: Aksen teks diubah dari biru (text-blue-600) ke hitam/gelap --}}
+                                <h6 class="text-xs font-bold text-[#2d3748] uppercase mb-3 border-bottom pb-2">Konfigurasi Video</h6>
                                 <div class="row g-3">
                                     <div class="col-12">
                                         <label class="text-[10px] font-bold text-gray-400 uppercase">Tipe Tugas</label>
@@ -240,7 +244,8 @@
                                         </select>
                                     </div>
                                     <div class="col-12">
-                                        <label class="text-[10px] font-bold text-blue-600 uppercase">Link G-Drive Dosen</label>
+                                        {{-- PERUBAHAN 3: Aksen teks biru dihilangkan diganti ke hitam/gelap --}}
+                                        <label class="text-[10px] font-bold text-[#2d3748] uppercase">Link G-Drive Dosen</label>
                                         <input type="url" name="link_drive" id="add-link-drive" class="form-control bg-gray-100" placeholder="Link folder pengumpulan..." disabled>
                                     </div>
                                     <div class="col-12">
@@ -285,7 +290,8 @@
 
             </div>
             <div class="modal-footer border-0 p-4 pt-0">
-                <button type="submit" class="btn btn-primary px-5 py-2 font-bold rounded-xl shadow-lg">Simpan</button>
+                {{-- PERUBAHAN 4: Tombol Simpan menggunakan warna kuning (btn-warning) dengan teks gelap --}}
+                <button type="submit" class="btn btn-warning px-5 py-2 font-bold rounded-xl shadow-lg text-[#2d3748]">Simpan</button>
             </div>
         </form>
     </div>
