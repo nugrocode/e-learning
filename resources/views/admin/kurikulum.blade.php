@@ -9,19 +9,25 @@
             <p class="text-gray-500 text-sm">Pilih Konsentrasi untuk mengatur mata kuliah.</p>
         </div>
 
-        {{-- TOMBOL SAKTI: AI SMART DISTRIBUTE (IKON DIPERBARUI) --}}
-        <form action="{{ url('/admin/kurikulum/auto-distribute') }}" method="POST" onsubmit="return confirm('AI akan memindai SEMUA mata kuliah dan mendistribusikannya ke Konsentrasi yang relevan secara otomatis. Lanjutkan?')">
+        <form action="{{ url('/admin/kurikulum/auto-distribute') }}" method="POST" id="formDistribute" onsubmit="showLoading(event)">
             @csrf
-            <button type="submit" class="btn btn-warning text-yellow-900 font-bold shadow-sm hover:bg-yellow-400 transition px-4 py-2 d-flex align-items-center gap-2">
-                {{-- GANTI IKON MENJADI MAGIC STARS --}}
-                <i class="bi bi-stars"></i> AI Smart Distribute All
+            <button type="submit" id="btnDistribute" class="btn btn-warning text-yellow-900 font-bold shadow-sm hover:bg-yellow-400 transition px-4 py-2 d-flex align-items-center gap-2">
+                <i class="bi bi-stars" id="iconDistribute"></i> <span id="textDistribute">AI Smart Distribute All</span>
             </button>
         </form>
     </div>
 
+    {{-- ALERT SUKSES --}}
     @if(session('success'))
         <div class="alert alert-success border-0 shadow-sm mb-4 rounded-lg d-flex align-items-center gap-2">
             <i class="bi bi-check-circle-fill text-xl"></i> {{ session('success') }}
+        </div>
+    @endif
+
+    {{-- ALERT ERROR (BARU DITAMBAHKAN) --}}
+    @if(session('error'))
+        <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-lg d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-xl"></i> {{ session('error') }}
         </div>
     @endif
 
@@ -30,10 +36,8 @@
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-100 d-flex flex-column hover:shadow-md transition-shadow">
                     
-                    {{-- HEADER GAMBAR (FIX PATH STORAGE) --}}
                     <div class="relative h-40 bg-gray-100 overflow-hidden">
                         @if($item->gambar)
-                            {{-- PERBAIKAN PATH: asset('storage/thumbnails/...') --}}
                             <img src="{{ asset('storage/thumbnails/' . $item->gambar) }}" 
                                  class="w-full h-full object-cover"
                                  onerror="this.src='{{ asset('images/logo_ukit.png') }}'">
@@ -50,7 +54,6 @@
                         </div>
                     </div>
 
-                    {{-- KONTEN --}}
                     <div class="p-4 flex-grow-1 d-flex flex-column">
                         <h5 class="font-bold text-lg text-gray-800 mb-2">{{ $item->nama_konsentrasi }}</h5>
                         <p class="text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed">
@@ -58,7 +61,6 @@
                         </p>
 
                         <div class="mt-auto border-t pt-3">
-                            {{-- LINK TETAP SESUAI ASLINYA --}}
                             <a href="{{ url('/admin/mata-kuliah/' . $item->id) }}" class="btn btn-primary bg-blue-900 w-100 border-0 font-bold text-sm py-2 rounded-lg hover:bg-blue-800 transition">
                                 <i class="bi bi-gear-wide-connected me-2"></i> Atur Kurikulum
                             </a>
@@ -74,3 +76,25 @@
         @endforelse
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    // Agar tombol menampilkan animasi saat proses loading yang lama
+    function showLoading(e) {
+        if(!confirm('AI akan memindai SEMUA mata kuliah dan mendistribusikannya secara otomatis. Proses ini memakan waktu sekitar 10-20 detik. Lanjutkan?')) {
+            e.preventDefault();
+            return false;
+        }
+        
+        let btn = document.getElementById('btnDistribute');
+        let icon = document.getElementById('iconDistribute');
+        let text = document.getElementById('textDistribute');
+        
+        btn.classList.add('disabled', 'opacity-75');
+        btn.style.pointerEvents = 'none';
+        icon.classList.remove('bi-stars');
+        icon.classList.add('spinner-border', 'spinner-border-sm');
+        text.innerText = 'AI Sedang Bekerja...';
+    }
+</script>
+@endpush

@@ -7,7 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DosenController;
 use App\Http\Controllers\MahasiswaController;
-use App\Http\Controllers\GoogleController; // <--- PENTING: Integrasi Google Drive
+use App\Http\Controllers\GoogleController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -74,10 +74,10 @@ Route::middleware(['cek_role:admin'])->group(function () {
     Route::put('/admin/mata-kuliah/{id}', [AdminController::class, 'courseUpdate']);
     Route::delete('/admin/mata-kuliah/{id}', [AdminController::class, 'courseDestroy']);
 
-    // FITUR AI ADMIN
+    // FITUR AI ADMIN (FIXED ROUTE PATHS)
     Route::post('/admin/kurikulum/auto-distribute', [AdminController::class, 'autoDistribute']);
-    Route::post('/admin/kurikulum/{id}/reset', [AdminController::class, 'resetKurikulum']);
-    Route::post('/admin/kurikulum/{id}/smart-insert', [AdminController::class, 'updateKurikulum']);
+    Route::post('/admin/kurikulum/reset/{id}', [AdminController::class, 'resetKurikulum']);     // Diperbaiki
+    Route::post('/admin/kurikulum/update/{id}', [AdminController::class, 'updateKurikulum']);   // Diperbaiki
 });
 
 
@@ -95,9 +95,9 @@ Route::middleware(['cek_role:dosen'])->group(function () {
     Route::get('/dosen/mahasiswa', [DosenController::class, 'mahasiswaIndex']);
     Route::post('/dosen/kick-student', [DosenController::class, 'mahasiswaKick']);
 
-    // 3. MANAJEMEN MATERI & KURIKULUM (Updated Flow)
-    Route::get('/dosen/materi', [DosenController::class, 'materiIndex']);       // Halaman Pilih Kelas
-    Route::get('/dosen/materi/{id}', [DosenController::class, 'materiShow']);    // Halaman Susun Materi (Timeline)
+    // 3. MANAJEMEN MATERI & KURIKULUM 
+    Route::get('/dosen/materi', [DosenController::class, 'materiIndex']);       
+    Route::get('/dosen/materi/{id}', [DosenController::class, 'materiShow']);    
     
     // CRUD Materi
     Route::post('/dosen/materi', [DosenController::class, 'materiStore']);
@@ -105,8 +105,8 @@ Route::middleware(['cek_role:dosen'])->group(function () {
     Route::delete('/dosen/materi/{id}', [DosenController::class, 'materiDestroy']);
     
     // Fitur AI Materi
-    Route::post('/dosen/materi/ai-insert/{id}', [DosenController::class, 'aiSmartInsert']); // Auto Insert
-    Route::post('/dosen/materi/ai-sort/{id}', [DosenController::class, 'aiAutoSort']);      // Auto Sort
+    Route::post('/dosen/materi/ai-insert/{id}', [DosenController::class, 'aiSmartInsert']); 
+    Route::post('/dosen/materi/ai-sort/{id}', [DosenController::class, 'aiAutoSort']);      
 
     // 4. KUIS & BANK SOAL
     Route::get('/dosen/kuis', [DosenController::class, 'kuisIndex']);
@@ -116,22 +116,19 @@ Route::middleware(['cek_role:dosen'])->group(function () {
 
     // 5. PENUGASAN & NILAI
     Route::get('/dosen/tugas', [DosenController::class, 'tugasIndex']);
-    
-    // [FIX]: Menyesuaikan rute menjadi POST dan menyamakan penamaan URL dengan yang ada di tugas.blade.php
     Route::post('/dosen/tugas/nilai/{id}', [DosenController::class, 'nilaiUpdate']);
-    
-    Route::get('/dosen/tugas/download/{id}', [DosenController::class, 'downloadAssignment']); // <--- PENTING: Download File
+    Route::get('/dosen/tugas/download/{id}', [DosenController::class, 'downloadAssignment']); 
 
     // 6. DISKUSI
     Route::get('/dosen/diskusi', [DosenController::class, 'diskusiIndex']);
     Route::post('/dosen/proses-diskusi', [DosenController::class, 'diskusiStore']);
     Route::delete('/dosen/diskusi/{id}', [DosenController::class, 'diskusiDestroy']);
 
-    // 7. PROFIL DOSEN (Fitur Baru)
+    // 7. PROFIL DOSEN 
     Route::get('/dosen/profil', [DosenController::class, 'profilIndex']);
     Route::post('/dosen/profil', [DosenController::class, 'profilUpdate']);
 
-    // 8. PREVIEW MATERI (Opsional)
+    // 8. PREVIEW MATERI 
     Route::get('/dosen/preview/{course_id}/{urutan}', [DosenController::class, 'preview']);
 });
 

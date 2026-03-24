@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin Panel') - E-Learning UKI Toraja</title>
 
+    {{-- Favicon Logo --}}
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_ukit.png') }}">
+
     {{-- CDN Libraries --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -142,13 +145,13 @@
                         <i class="bi bi-list text-2xl"></i>
                     </button>
 
-                    <div class="ms-auto d-flex align-items-center gap-3">
-                        <div class="text-end hidden md:block" style="line-height: 1.2;">
-                            <p class="mb-0 text-sm font-bold text-gray-800">{{ session('nama') ?? 'Administrator' }}</p>
-                            <p class="mb-0 text-[10px] text-gray-700 uppercase font-semibold">Super Admin</p>
+                    <div class="ms-auto d-flex align-items-center gap-2 md:gap-3">
+                        {{-- DIUBAH: Dibuat responsif seperti mahasiswa --}}
+                        <div class="text-end" style="line-height: 1.2;">
+                            <p class="mb-0 text-[10px] md:text-sm font-bold text-gray-800 truncate max-w-[120px] md:max-w-none">{{ session('nama') ?? 'Administrator' }}</p>
+                            <p class="mb-0 text-[8px] md:text-[10px] text-gray-700 uppercase font-semibold">Super Admin</p>
                         </div>
                         <div class="relative">
-                            {{-- FOTO PROFIL ADMIN (FIX PATH STORAGE) --}}
                             <img src="{{ session('foto') && session('foto') != 'default.png' ? asset('storage/profiles/' . session('foto')) : asset('images/logo_ukit.png') }}"
                                  class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border-2 border-white shadow-sm"
                                  style="aspect-ratio: 1/1;"
@@ -171,7 +174,7 @@
         var el = document.getElementById("wrapper");
         var toggleButton = document.getElementById("menu-toggle");
         var sidebarClose = document.getElementById("sidebar-close");
-        var sidebarMenu = document.getElementById("scrollable-sidebar-menu"); // Target elemen scrollable
+        var sidebarMenu = document.getElementById("scrollable-sidebar-menu");
 
         function toggleSidebar() {
             el.classList.toggle("toggled");
@@ -205,13 +208,11 @@
         // SCRIPT UNTUK MENYIMPAN POSISI SCROLL SIDEBAR MENGGUNAKAN SESSION STORAGE
         // =========================================================================
         if (sidebarMenu) {
-            // 1. Saat halaman dimuat, cek apakah ada posisi scroll yang tersimpan
             const savedScrollPosition = sessionStorage.getItem("adminSidebarScroll");
             if (savedScrollPosition) {
                 sidebarMenu.scrollTop = savedScrollPosition;
             }
 
-            // 2. Setiap kali sidebar di-scroll, simpan posisi terbarunya
             sidebarMenu.addEventListener("scroll", function() {
                 sessionStorage.setItem("adminSidebarScroll", sidebarMenu.scrollTop);
             });

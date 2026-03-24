@@ -106,13 +106,12 @@
                     </div>
                 </div>
 
-                {{-- MODAL EDIT MATERI (Include Form Edit) --}}
                 @include('dosen.modal_edit_materi', ['m' => $m])
             @endforeach
         </div>
     @endif
 
-    {{-- 3. MODAL TAMBAH MATERI (Dengan Input Drive) --}}
+   
     <div class="modal fade" id="modalTambahMateri" tabindex="-1">
         <div class="modal-dialog">
             <form action="{{ url('/dosen/materi') }}" method="POST" enctype="multipart/form-data" class="modal-content rounded-xl border-0 shadow-lg">
@@ -149,7 +148,7 @@
                         </div>
                     </div>
 
-                    {{-- INPUT GOOGLE DRIVE (Hidden by default) --}}
+                    
                     <div class="mb-3" id="drive_input_add" style="display: none;">
                         <label class="form-label text-xs font-bold uppercase text-blue-600">
                             <i class="bi bi-google-drive"></i> Link Folder G-Drive (Pengumpulan)
@@ -178,7 +177,6 @@
 @push('scripts')
 <script>
     function toggleDriveInput(mode) {
-        // Mode 'add' untuk modal tambah, nanti bisa buat mode 'edit' juga
         let selectId = mode === 'add' ? 'tipe_submission_add' : 'tipe_submission_edit';
         let divId = mode === 'add' ? 'drive_input_add' : 'drive_input_edit';
         

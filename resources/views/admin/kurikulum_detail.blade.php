@@ -3,8 +3,8 @@
 @section('title', 'Kurikulum - ' . $konsentrasi->nama_konsentrasi)
 
 @section('content')
-    {{-- NAVIGASI BALIK --}}
-    <a href="{{ url('/admin/mata-kuliah') }}" class="text-gray-500 hover:text-gray-800 text-sm font-bold mb-4 d-inline-block transition">
+    {{-- NAVIGASI BALIK (SUDAH DIPERBAIKI) --}}
+    <a href="{{ url('/admin/kurikulum') }}" class="text-gray-500 hover:text-gray-800 text-sm font-bold mb-4 d-inline-block transition">
         <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Konsentrasi
     </a>
 
@@ -95,7 +95,6 @@
                             <td class="px-4 py-3">
                                 <div class="d-flex align-items-center gap-3">
                                     @if($mk->gambar)
-                                        {{-- HANYA BAGIAN INI YANG DIUBAH: Path ke storage/thumbnails/ --}}
                                         <img src="{{ asset('storage/thumbnails/' . $mk->gambar) }}" 
                                              class="w-10 h-10 rounded object-cover border"
                                              onerror="this.src='{{ asset('images/logo_ukit.png') }}'">

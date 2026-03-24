@@ -164,6 +164,13 @@ class AdminController extends Controller
         $user->role = $request->role;
         $user->save();
 
+        if ($id == Session::get('user_id')) {
+            Session::put('nama', $user->nama_lengkap);
+            if ($user->foto_profil) {
+                Session::put('foto', $user->foto_profil);
+            }
+        }
+
         return back()->with('success', 'Data pengguna diperbarui!');
     }
 
@@ -388,6 +395,8 @@ class AdminController extends Controller
     }
 
     public function autoDistribute() {
+        set_time_limit(300); // Waktu eksekusi 5 Menit agar tidak timeout
+
         $concentrations = Concentration::all();
         $courses = Course::all(); 
 
@@ -396,31 +405,39 @@ class AdminController extends Controller
         $listKonsentrasi = $concentrations->map(function($c) { return "ID:{$c->id}={$c->nama_konsentrasi}"; })->implode(", ");
         $listCourses = $courses->map(function($c) { return "ID:{$c->id}={$c->nama_mk}(" . Str::limit($c->deskripsi, 50) . ")"; })->implode("\n");
 
+        // PROMPT BARU: Persona jenius dan sangat ketat memisahkan jurusan
         $prompt = "
-            Role: Kaprodi. Tugas: Distribusikan Mata Kuliah ke Prodi yang sesuai.
-            LIST PRODI: [{$listKonsentrasi}]
-            LIST MK: 
+            Anda adalah Dekan Ilmu Komputer tingkat Master yang jenius dan sangat teliti.
+            Tugas Anda: Distribusikan daftar Mata Kuliah ke dalam Konsentrasi/Prodi secara AKURAT, KETAT, dan SPESIFIK.
+
+            LIST KONSENTRASI: [{$listKonsentrasi}]
+            LIST MATA KULIAH: 
             {$listCourses}
             
-            ATURAN: 
-            1. MK Umum (Agama, Bahasa, Pancasila, Coding Dasar) -> Masukkan ke SEMUA ID Prodi.
-            2. MK Spesifik -> Hanya ke ID Prodi yang relevan (Misal: 'Jaringan' ke Teknik Komputer).
+            ATURAN SANGAT KETAT: 
+            1. FUNDAMENTAL (Wajib di SEMUA ID konsentrasi): HANYA mata kuliah dasar absolut seperti Dasar Pemrograman, Struktur Data, Basis Data, OOP, dan Jaringan Komputer.
+            2. SPESIFIK (SANGAT EKSKLUSIF): Mata kuliah tingkat lanjut/kejuruan HARUS didistribusikan ke HANYA SATU ID konsentrasi yang paling relevan. JANGAN PERNAH MENCAMPURNYA!
+               - Contoh: Web, Software, SQA, Microservices, Cloud -> HANYA ke Software Development.
+               - Contoh: Kecerdasan Buatan, Machine Learning, Data Mining, Preprocessing, Deep Learning -> HANYA ke Machine Learning.
+               - Contoh: Mikrokontroler, IoT, Embedded System, Wireless Sensor -> HANYA ke Internet of Things.
+               - Contoh: Android, Mobile, Cross-Platform -> HANYA ke Android Development.
+               - Contoh: Kinematika, Robotika, Aktuator, ROS -> HANYA ke Robotika.
             
-            OUTPUT: JSON Array valid saja: [{\"course_id\": 1, \"target_concentration_ids\": [1, 2]}]
+            WAJIB BALAS DENGAN ARRAY JSON SAJA TANPA MARKDOWN.
+            FORMAT: [{\"course_id\": 1, \"target_concentration_ids\": [1, 2, 3, 4, 5]}, {\"course_id\": 2, \"target_concentration_ids\": [3]}]
         ";
 
         $mappings = $this->gemini->ask($prompt, true);
 
-        if (is_array($mappings)) {
+        if (is_array($mappings) && count($mappings) > 0) {
+            
+            // [PENTING] Hapus semua pemetaan lama agar MK yang sebelumnya "salah kamar" langsung bersih
+            DB::table('concentration_course')->delete();
+
             $count = 0;
             foreach ($mappings as $map) {
-                foreach ($map['target_concentration_ids'] as $concId) {
-                    $exists = DB::table('concentration_course')
-                        ->where('concentration_id', $concId)
-                        ->where('course_id', $map['course_id'])
-                        ->exists();
-
-                    if (!$exists) {
+                if(isset($map['course_id']) && isset($map['target_concentration_ids']) && is_array($map['target_concentration_ids'])){
+                    foreach ($map['target_concentration_ids'] as $concId) {
                         DB::table('concentration_course')->insert([
                             'concentration_id' => $concId, 
                             'course_id' => $map['course_id'], 
@@ -430,35 +447,59 @@ class AdminController extends Controller
                     }
                 }
             }
-            return back()->with('success', "AI berhasil mendistribusikan {$count} mata kuliah!");
+            return back()->with('success', "Sempurna! AI telah membersihkan kurikulum lama dan merancang ulang {$count} penempatan mata kuliah secara akurat.");
         }
-        return back()->with('error', 'AI tidak memberikan respons valid.');
+        return back()->with('error', 'AI gagal merespons dengan format yang valid. Silakan klik tombol sekali lagi.');
     }
 
     public function resetKurikulum($concentration_id) {
+        set_time_limit(300); // Mencegah timeout saat AI sedang berpikir
+        
         $konsentrasi = Concentration::findOrFail($concentration_id);
         $courses = $konsentrasi->courses()->get();
 
         if ($courses->isEmpty()) return back()->with('error', 'Data kosong.');
 
-        $data = $courses->map(function($c) { return "ID:{$c->id}, Nama:{$c->nama_mk}"; })->implode("\n");
-        $prompt = "Urutkan mata kuliah berikut secara logis dari Semester 1 (Dasar) sampai Akhir (Lanjutan/Skripsi). \nDATA:\n{$data}\nOUTPUT: JSON Array of IDs only: [1, 5, 2...]";
+        $data = $courses->map(function($c) { return "ID:{$c->id} | Nama: {$c->nama_mk}"; })->implode("\n");
+        
+        // PROMPT BARU: Panduan Leveling (Roadmap) Kurikulum yang sangat ketat
+        $prompt = "
+            Anda adalah Pakar Kurikulum Akademik IT.
+            Tugas Anda: Mengurutkan daftar Mata Kuliah berikut untuk membentuk Learning Path dari tingkat paling DASAR (Semester 1) hingga tingkat paling AHLI/MAHIR (Semester Akhir).
+
+            PANDUAN PENGURUTAN SANGAT KETAT (Leveling Roadmap):
+            1. FUNDAMENTAL (Fondasi Mutlak): Dasar Pemrograman Komputer, Struktur Data dan Algoritma. (Wajib urutan 1-2)
+            2. CORE (Inti CS): Basis Data Relasional, Pemrograman Berorientasi Objek, Komunikasi Data dan Jaringan Komputer. (Wajib diurutkan setelah fundamental)
+            3. MENENGAH (Pengantar Spesialisasi): Pemrograman Dasar (Web/Android), Pengantar Kecerdasan Buatan, Desain Sistem, Elektronika/Mikrokontroler, Kinematika.
+            4. LANJUTAN (Spesialisasi Tingkat Menengah): Framework, Machine Learning Dasar, IoT/Embedded System, Arsitektur Aplikasi, Sistem Kontrol/Sensor.
+            5. MAHIR/EXPERT (Topik Sangat Berat): Cloud Computing, Deep Learning, Keamanan IoT, Pemrograman Cross-Platform, Robot Operating System (ROS), Microservices. (Wajib ditaruh paling akhir)
+
+            DATA MATA KULIAH YANG HARUS DIURUTKAN:
+            {$data}
+
+            WAJIB BALAS DENGAN ARRAY JSON SAJA TANPA TEKS LAIN DAN TANPA MARKDOWN (```json).
+            Hanya berisi ID mata kuliah yang sudah diurutkan dari dasar ke mahir secara logis.
+            FORMAT: [1, 5, 2, 8, 10]
+        ";
         
         $sortedIDs = $this->gemini->ask($prompt, true);
 
-        if ($sortedIDs && is_array($sortedIDs)) {
+        // Validasi: Pastikan hasil adalah Array dan jumlah ID yang dikembalikan sama dengan jumlah MK awal
+        if ($sortedIDs && is_array($sortedIDs) && count($sortedIDs) === $courses->count()) {
             foreach ($sortedIDs as $index => $course_id) { 
                 $konsentrasi->courses()->updateExistingPivot($course_id, ['urutan' => $index + 1]);
             }
-            return back()->with('success', 'Kurikulum berhasil disusun ulang oleh AI!');
+            return back()->with('success', 'Luar biasa! AI berhasil menyusun ulang roadmap kurikulum secara rapi dari level dasar hingga ahli.');
         }
-        return back()->with('error', 'Gagal memproses AI.');
+        
+        return back()->with('error', 'AI gagal memproses urutan atau ada data yang tertinggal. Silakan coba klik lagi.');
     }
 
+    // FIX QUERY PIVOT: Mengubah 'pivot_urutan' menjadi 'concentration_course.urutan'
     public function updateKurikulum($concentration_id) {
         $konsentrasi = Concentration::findOrFail($concentration_id);
         
-        $existing = $konsentrasi->courses()->wherePivot('urutan', '>', 0)->orderBy('pivot_urutan', 'asc')->get();
+        $existing = $konsentrasi->courses()->wherePivot('urutan', '>', 0)->orderBy('concentration_course.urutan', 'asc')->get();
         $pending = $konsentrasi->courses()->wherePivot('urutan', 0)->get();
 
         if ($pending->isEmpty()) return back()->with('error', 'Tidak ada MK baru yang perlu disisipkan.');
@@ -487,7 +528,7 @@ class AdminController extends Controller
                 
                 $konsentrasi->courses()->updateExistingPivot($newCourse->id, ['urutan' => $targetUrutan + 1]);
                 
-                $existing = $konsentrasi->courses()->wherePivot('urutan', '>', 0)->orderBy('pivot_urutan', 'asc')->get();
+                $existing = $konsentrasi->courses()->wherePivot('urutan', '>', 0)->orderBy('concentration_course.urutan', 'asc')->get();
             }
         }
         return back()->with('success', 'Mata Kuliah baru berhasil disisipkan secara cerdas!');
