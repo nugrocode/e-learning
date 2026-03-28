@@ -12,7 +12,7 @@
         
         <button class="btn btn-primary bg-blue-900 border-0 rounded-lg font-bold shadow-sm hover:bg-blue-800 transition w-full md:w-auto py-2 px-4 text-sm" 
             data-bs-toggle="modal" data-bs-target="#modalTambah">
-            <i class="bi bi-plus-lg me-2"></i> Tambah Prodi
+            <i class="bi bi-plus-lg me-2"></i> Tambah Konsentrasi
         </button>
     </div>
 
@@ -113,7 +113,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-xl border-0 shadow-lg">
                 <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title font-bold text-gray-800">Tambah Prodi Baru</h5>
+                    <h5 class="modal-title font-bold text-gray-800">Tambah Konsentrasi Baru</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ url('/admin/konsentrasi') }}" method="POST" enctype="multipart/form-data">
