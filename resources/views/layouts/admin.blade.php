@@ -105,7 +105,7 @@
                 <a href="{{ url('/admin/konsentrasi') }}" 
                    class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
                    {{ Request::is('admin/konsentrasi*') ? 'active-menu' : '' }}">
-                    <i class="bi bi-diagram-3-fill text-lg"></i> Prodi / Konsentrasi
+                    <i class="bi bi-diagram-3-fill text-lg"></i> Konsentrasi
                 </a>
                 <a href="{{ url('/admin/bank-mk') }}" 
                    class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 

@@ -1,12 +1,11 @@
+{{-- users.blade.php --}}
 @extends('layouts.admin')
 
 @section('title', 'Data Pengguna')
 
 @section('content')
     
-    {{-- HEADER & FILTER CARDS --}}
     <div class="row g-2 g-md-3 mb-4">
-        {{-- Card Total (Info Only) --}}
         <div class="col-6 col-md-3">
             <div class="bg-white p-2 p-md-3 border rounded shadow-sm d-flex justify-content-between align-items-center h-100">
                 <div>
@@ -17,7 +16,6 @@
             </div>
         </div>
         
-        {{-- Card Mahasiswa --}}
         <div class="col-6 col-md-3">
             <a href="{{ url('/admin/users?role=mahasiswa') }}" class="text-decoration-none h-100 d-block">
                 <div class="bg-white p-2 p-md-3 border rounded shadow-sm d-flex justify-content-between align-items-center h-100 transition-all hover:shadow-md {{ request('role') == 'mahasiswa' ? 'border-success border-2 bg-green-50' : '' }}">
@@ -30,7 +28,6 @@
             </a>
         </div>
 
-        {{-- Card Dosen --}}
         <div class="col-6 col-md-3">
             <a href="{{ url('/admin/users?role=dosen') }}" class="text-decoration-none h-100 d-block">
                 <div class="bg-white p-2 p-md-3 border rounded shadow-sm d-flex justify-content-between align-items-center h-100 transition-all hover:shadow-md {{ request('role') == 'dosen' ? 'border-primary border-2 bg-blue-50' : '' }}">
@@ -43,7 +40,6 @@
             </a>
         </div>
 
-        {{-- Card Admin --}}
         <div class="col-6 col-md-3">
             <a href="{{ url('/admin/users?role=admin') }}" class="text-decoration-none h-100 d-block">
                 <div class="bg-white p-2 p-md-3 border rounded shadow-sm d-flex justify-content-between align-items-center h-100 transition-all hover:shadow-md {{ request('role') == 'admin' ? 'border-warning border-2 bg-yellow-50' : '' }}">
@@ -57,10 +53,8 @@
         </div>
     </div>
 
-    {{-- AREA UTAMA --}}
     <div class="bg-white border rounded shadow-sm overflow-hidden">
         
-        {{-- Toolbar Pencarian dan Tombol --}}
         <div class="p-3 p-md-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <h5 class="m-0 fw-bold text-secondary d-flex align-items-center gap-2 text-sm md:text-base">
                 @if(request('role') == 'mahasiswa') <i class="bi bi-mortarboard text-success"></i> Data Mahasiswa
@@ -80,14 +74,14 @@
                     </button>
                 </form>
                 
-                {{-- Class diperbaiki di sini: w-full (lebar penuh di HP), md:w-auto (mengecil otomatis di Laptop) --}}
-                <button class="btn btn-primary fw-bold text-sm px-4 shadow-sm w-full md:w-auto text-nowrap" data-bs-toggle="modal" data-bs-target="#modalTambah">
+                <button class="btn fw-bold text-sm px-4 shadow-sm w-full md:w-auto text-nowrap" 
+                        style="background-color: #FACC15; color: #2d3748; border: none;" 
+                        data-bs-toggle="modal" data-bs-target="#modalTambah">
                     <i class="bi bi-plus-lg me-1"></i> Tambah Data
                 </button>
             </div>
         </div>
 
-        {{-- TABEL DATA --}}
         <div class="table-responsive no-scrollbar">
             <table class="table table-hover align-middle mb-0 text-xs md:text-sm">
                 <thead class="bg-light text-secondary text-uppercase fw-bold text-[10px] md:text-[12px]" style="letter-spacing: 0.5px;">
@@ -109,7 +103,6 @@
                                          onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($user->nama_lengkap) }}&background=E9ECEF&color=6C757D&bold=true'">
                                     <div class="lh-sm">
                                         <div class="fw-bold text-dark text-xs md:text-sm">{{ $user->nama_lengkap }}</div>
-    
                                     </div>
                                 </div>
                             </td>
@@ -145,13 +138,12 @@
                             </td>
                         </tr>
 
-                        {{-- MODAL EDIT --}}
                         <div class="modal fade" id="modalEdit{{ $user->id }}" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content rounded-4 border-0 shadow">
-                                    <div class="modal-header py-3 bg-light border-bottom-0">
-                                        <h6 class="modal-title fw-bold text-gray-800 text-sm">Edit Pengguna</h6>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    <div class="modal-header py-3 border-bottom-0" style="background-color: #2d3748;">
+                                        <h6 class="modal-title fw-bold text-sm" style="color: #FACC15;">Edit Pengguna</h6>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form action="{{ url('/admin/users/'.$user->id) }}" method="POST" enctype="multipart/form-data">
                                         @csrf @method('PUT')
@@ -181,7 +173,8 @@
                                             </div>
                                         </div>
                                         <div class="modal-footer py-2 border-top-0">
-                                            <button type="submit" class="btn btn-primary w-100 font-bold py-2 rounded-lg text-sm shadow-sm">Simpan Perubahan</button>
+                                            <button type="submit" class="btn w-100 font-bold py-2 rounded-lg text-sm shadow-sm" 
+                                                    style="background-color: #FACC15; color: #2d3748; border: none;">Simpan Perubahan</button>
                                         </div>
                                     </form>
                                 </div>
@@ -207,12 +200,11 @@
         @endif
     </div>
 
-    {{-- MODAL TAMBAH --}}
     <div class="modal fade" id="modalTambah" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header py-3 bg-primary text-white border-bottom-0">
-                    <h6 class="modal-title fw-bold text-sm"><i class="bi bi-person-plus me-2"></i>Tambah Data Baru</h6>
+                <div class="modal-header py-3 border-bottom-0" style="background-color: #2d3748;">
+                    <h6 class="modal-title fw-bold text-sm" style="color: #FACC15;"><i class="bi bi-person-plus me-2"></i>Tambah Data Baru</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ url('/admin/users') }}" method="POST" enctype="multipart/form-data">
@@ -229,7 +221,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label text-secondary text-[10px] text-uppercase fw-bold">Role Default</label>
-                                <input type="text" class="form-control text-sm bg-light fw-bold text-primary rounded-lg" value="{{ ucfirst(request('role', 'mahasiswa')) }}" readonly>
+                                <input type="text" class="form-control text-sm bg-light fw-bold rounded-lg" style="color: #2d3748;" value="{{ ucfirst(request('role', 'mahasiswa')) }}" readonly>
                                 <input type="hidden" name="role" value="{{ request('role', 'mahasiswa') }}">
                             </div>
                         </div>
@@ -243,7 +235,8 @@
                         </div>
                     </div>
                     <div class="modal-footer py-2 border-top-0">
-                        <button type="submit" class="btn btn-primary w-100 font-bold py-2 text-sm rounded-lg shadow-sm">Simpan User Baru</button>
+                        <button type="submit" class="btn w-100 font-bold py-2 text-sm rounded-lg shadow-sm" 
+                                style="background-color: #FACC15; color: #2d3748; border: none;">Simpan User Baru</button>
                     </div>
                 </form>
             </div>
