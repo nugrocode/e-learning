@@ -10,9 +10,11 @@
             <p class="text-gray-500 text-sm">Pusat data seluruh mata kuliah. Tambah, Edit, atau Hapus master data di sini.</p>
         </div>
         
-        <button class="btn btn-primary bg-blue-900 border-0 rounded-lg font-bold py-2 px-4 shadow-sm hover:bg-blue-800 transition" 
+        {{-- UPDATE WAKNA: Tombol Buat Master Baru --}}
+        <button class="btn rounded-lg font-bold py-2 px-4 shadow-sm transition" 
+            style="background-color: #FACC15; color: #2d3748; border: none;"
             data-bs-toggle="modal" data-bs-target="#modalTambah">
-            <i class="bi bi-plus-lg me-2"></i> Buat Master Baru
+            <i class="bi bi-plus-lg me-2"></i> Tambah Mata Kuliah
         </button>
     </div>
 
@@ -41,7 +43,6 @@
                         <tr>
                             <td class="px-4 py-3">
                                 <div class="d-flex align-items-center gap-3">
-                                    {{-- PATH GAMBAR KE STORAGE/THUMBNAILS DENGAN FIX GEPENG --}}
                                     @if($mk->gambar)
                                         <img src="{{ asset('storage/thumbnails/' . $mk->gambar) }}" 
                                              class="w-12 h-12 rounded-lg object-cover border shadow-sm"
@@ -74,7 +75,6 @@
                                 </span>
                             </td>
                             <td class="px-4">
-                                {{-- FIX TOMBOL AKSI: MENGGUNAKAN FLEX AGAR RAPI KE SAMPING --}}
                                 <div class="d-flex justify-content-end gap-2">
                                     <button class="btn btn-sm btn-light text-blue-600 border rounded-lg hover:bg-blue-50" 
                                         data-bs-toggle="modal" data-bs-target="#modalEdit{{ $mk->id }}" title="Edit">
@@ -95,9 +95,10 @@
                         <div class="modal fade" id="modalEdit{{ $mk->id }}" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content rounded-xl border-0 shadow-lg">
-                                    <div class="modal-header border-bottom-0 pb-0">
-                                        <h5 class="modal-title font-bold text-gray-800">Edit Master Data</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    {{-- UPDATE WARNA: Header Modal Edit --}}
+                                    <div class="modal-header py-3 border-bottom-0" style="background-color: #2d3748;">
+                                        <h5 class="modal-title font-bold text-sm" style="color: #FACC15;">Edit Mata Kuliah</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form action="{{ url('/admin/bank-mk/'.$mk->id) }}" method="POST" enctype="multipart/form-data">
                                         @csrf @method('PUT')
@@ -126,7 +127,9 @@
                                             </div>
                                         </div>
                                         <div class="modal-footer border-top-0 pt-0">
-                                            <button type="submit" class="btn btn-primary bg-blue-900 border-0 w-100 font-bold py-2 rounded-lg">Simpan Perubahan</button>
+                                            {{-- UPDATE WARNA: Tombol Submit Modal Edit --}}
+                                            <button type="submit" class="btn w-100 font-bold py-2 rounded-lg" 
+                                                    style="background-color: #FACC15; color: #2d3748; border: none;">Simpan Perubahan</button>
                                         </div>
                                     </form>
                                 </div>
@@ -149,9 +152,10 @@
     <div class="modal fade" id="modalTambah" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-xl border-0 shadow-lg">
-                <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title font-bold text-gray-800">Buat Master Mata Kuliah</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                {{-- UPDATE WARNA: Header Modal Tambah --}}
+                <div class="modal-header py-3 border-bottom-0" style="background-color: #2d3748;">
+                    <h5 class="modal-title font-bold text-sm" style="color: #FACC15;">Tambah Mata Kuliah</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ url('/admin/bank-mk') }}" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -179,7 +183,9 @@
                         </div>
                     </div>
                     <div class="modal-footer border-top-0 pt-0">
-                        <button type="submit" class="btn btn-primary bg-blue-900 border-0 w-100 font-bold py-2 rounded-lg">Simpan ke Bank Data</button>
+                        {{-- UPDATE WARNA: Tombol Submit Modal Tambah --}}
+                        <button type="submit" class="btn w-100 font-bold py-2 rounded-lg" 
+                                style="background-color: #FACC15; color: #2d3748; border: none;">Simpan ke Bank Data</button>
                     </div>
                 </form>
             </div>

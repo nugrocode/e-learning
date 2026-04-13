@@ -11,7 +11,9 @@
 
         <form action="{{ url('/admin/kurikulum/auto-distribute') }}" method="POST" id="formDistribute" onsubmit="showLoading(event)">
             @csrf
-            <button type="submit" id="btnDistribute" class="btn btn-warning text-yellow-900 font-bold shadow-sm hover:bg-yellow-400 transition px-4 py-2 d-flex align-items-center gap-2">
+            {{-- UPDATE WARNA: Tombol AI Smart Distribute All --}}
+            <button type="submit" id="btnDistribute" class="btn font-bold shadow-sm transition px-4 py-2 d-flex align-items-center gap-2" 
+                    style="background-color: #FACC15; color: #2d3748; border: none;">
                 <i class="bi bi-stars" id="iconDistribute"></i> <span id="textDistribute">AI Smart Distribute All</span>
             </button>
         </form>
@@ -24,7 +26,7 @@
         </div>
     @endif
 
-    {{-- ALERT ERROR (BARU DITAMBAHKAN) --}}
+    {{-- ALERT ERROR --}}
     @if(session('error'))
         <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-lg d-flex align-items-center gap-2">
             <i class="bi bi-exclamation-triangle-fill text-xl"></i> {{ session('error') }}
@@ -61,7 +63,9 @@
                         </p>
 
                         <div class="mt-auto border-t pt-3">
-                            <a href="{{ url('/admin/mata-kuliah/' . $item->id) }}" class="btn btn-primary bg-blue-900 w-100 border-0 font-bold text-sm py-2 rounded-lg hover:bg-blue-800 transition">
+                            {{-- UPDATE WARNA: Tombol Atur Kurikulum --}}
+                            <a href="{{ url('/admin/mata-kuliah/' . $item->id) }}" class="btn w-100 border-0 font-bold text-sm py-2 rounded-lg transition" 
+                               style="background-color: #2d3748; color: #FACC15;">
                                 <i class="bi bi-gear-wide-connected me-2"></i> Atur Kurikulum
                             </a>
                         </div>
