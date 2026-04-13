@@ -61,9 +61,14 @@
                                                     </small>
                                                 </div>
                                             </div>
-                                            <p class="mb-0 mt-2 text-success opacity-75" style="font-size: 0.75rem; line-height: 1.2;">
+                                            <p class="mb-3 mt-2 text-success opacity-75" style="font-size: 0.75rem; line-height: 1.2;">
                                                 File tugas mahasiswa otomatis tersimpan di Drive Anda.
                                             </p>
+                                            
+                                           
+                                            <a href="{{ url('/google/disconnect') }}" class="btn btn-outline-danger w-100 btn-sm fw-bold d-flex align-items-center justify-content-center gap-2" onclick="return confirm('Yakin ingin memutuskan koneksi Google Drive dan mengganti akun?')">
+                                                Putuskan Koneksi
+                                            </a>
                                         </div>
                                     </div>
                                 @else
@@ -156,12 +161,12 @@
 @push('scripts')
 <script>
     function previewImage(input) {
-        if (input.files && input.files[0]) {
+        if (input.files && input.files) {
             var reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('previewFoto').src = e.target.result;
             }
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(input.files);
         }
     }
 </script>

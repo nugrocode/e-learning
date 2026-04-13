@@ -33,6 +33,7 @@ Route::get('/logout', [AuthController::class, 'logout']);
 // ==========================================================
 Route::get('/google/connect', [GoogleController::class, 'redirectToGoogle']);
 Route::get('/google/callback', [GoogleController::class, 'handleGoogleCallback']);
+Route::get('/google/disconnect', [GoogleController::class, 'disconnectGoogle']); // <-- ROUTE BARU DITAMBAHKAN
 
 
 // ==========================================================
