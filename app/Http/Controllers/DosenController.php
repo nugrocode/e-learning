@@ -424,7 +424,7 @@ class DosenController extends Controller
         $path = 'submissions/' . $sub->file_path;
         
         if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->download($path);
+            return response()->download(storage_path('app/public/' . $path));
         }
         
         return back()->with('error', 'File tidak ditemukan (Mungkin terhapus atau path salah).');
