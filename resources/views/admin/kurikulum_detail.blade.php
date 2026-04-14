@@ -27,6 +27,43 @@
             <i class="bi bi-check-circle-fill text-xl"></i> {{ session('success') }}
         </div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-lg">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+        </div>
+    @endif
+
+    {{-- [FIX] BLOK PENDING INI SEBELUMNYA HILANG --}}
+    @if($new_courses->count() > 0)
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-5 animate-fade-in-up">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="font-bold text-yellow-800 m-0 flex items-center gap-2">
+                    <i class="bi bi-exclamation-circle-fill"></i> Pending (Belum Diurutkan)
+                </h5>
+                {{-- Jika kurikulum kosong, gunakan Re-Sort. Jika sudah ada isinya, gunakan Auto-Insert --}}
+                <form action="{{ url('/admin/kurikulum/' . ($courses->count() == 0 ? 'reset' : 'update') . '/' . $konsentrasi->id) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn font-bold shadow-sm transition text-sm px-3 py-2 rounded-lg" 
+                            style="background-color: #FACC15; color: #2d3748; border: none;">
+                        <i class="bi bi-stars"></i> AI Auto-Sort
+                    </button>
+                </form>
+            </div>
+            <div class="row g-3">
+                @foreach($new_courses as $mk)
+                    <div class="col-md-6 col-lg-4">
+                        <div class="bg-white p-3 rounded-lg border border-yellow-100 shadow-sm d-flex align-items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold">?</div>
+                            <div>
+                                <h6 class="font-bold text-gray-800 m-0 text-sm">{{ $mk->nama_mk }}</h6>
+                                <span class="text-[10px] text-gray-400">Menunggu AI...</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 d-flex justify-content-between align-items-center">
@@ -89,7 +126,6 @@
 
                             <td class="text-end px-4 text-nowrap">
                                 <div class="d-flex justify-content-end gap-1">
-                                    {{-- TETAP BIRU: Tombol Edit --}}
                                     <button class="btn btn-sm btn-light border rounded hover:bg-blue-50" 
                                         style="color: #0d6efd;" 
                                         data-bs-toggle="modal" data-bs-target="#modalEdit{{ $mk->id }}">
@@ -149,7 +185,7 @@
                         </div>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-gray-400">Belum ada kurikulum.</td>
+                            <td colspan="4" class="text-center py-5 text-gray-400">Belum ada kurikulum yang diurutkan.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -172,9 +208,6 @@
                         <div class="mb-3">
                             <label class="form-label text-xs font-bold text-gray-500 uppercase">Nama Mata Kuliah</label>
                             <input type="text" name="nama_mk" class="form-control rounded-lg" placeholder="Contoh: Algoritma" required>
-                            <div class="form-text text-xs" style="color: #2d3748;">
-                                <i class="bi bi-check-circle-fill" style="color: #FACC15;"></i> Mengambil data lama otomatis jika nama MK sama di Bank Data.
-                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-xs font-bold text-gray-500 uppercase">Dosen (Wajib jika MK Baru)</label>

@@ -67,7 +67,6 @@ class GoogleController extends Controller
             
             $user->save();
 
-            // Notifikasi sukses dihilangkan, hanya redirect biasa
             return redirect('/dosen/profil');
 
         } catch (\Exception $e) {

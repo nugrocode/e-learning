@@ -10,7 +10,7 @@ class GeminiService
     public function ask($prompt, $isJson = false)
     {
         $apiKey = env('GEMINI_API_KEY');
-        $model = env('GEMINI_MODEL', 'gemini-1.5-flash'); 
+        $model = env('GEMINI_MODEL', 'gemini-2.5-flash'); 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
         // Konfigurasi dinamis (Jika isJson true, paksa AI output JSON murni)
