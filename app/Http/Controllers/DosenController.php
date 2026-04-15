@@ -358,20 +358,29 @@ class DosenController extends Controller
         $courses = Course::where('dosen_id', $dosen_id)->get();
         $query = Material::where('kategori', 'quiz')->whereIn('course_id', $courses->pluck('id'))->withCount('questions');
         if ($request->course_id) $query->where('course_id', $request->course_id);
-        $quizzes = $query->orderBy('created_at', 'desc')->get();
+        
+        $quizzes = $query->orderBy('created_at', 'asc')->get(); 
+        
         return view('dosen.kuis', compact('quizzes', 'courses'));
     }
 
     public function soalStore(Request $request)
     {
         QuizQuestion::create($request->all());
-        return back()->with('success', 'Butir soal berhasil ditambahkan.');
+        
+        return back()->with('success', 'Butir soal berhasil ditambahkan.')
+                     ->with('open_modal', $request->material_id);
     }
 
     public function soalDestroy($id)
     {
-        QuizQuestion::findOrFail($id)->delete();
-        return back()->with('success', 'Soal dihapus.');
+        $soal = QuizQuestion::findOrFail($id);
+        $material_id = $soal->material_id; 
+        $soal->delete();
+        
+        
+        return back()->with('success', 'Soal dihapus.')
+                     ->with('open_modal', $material_id);
     }
 
     // ==========================================================
