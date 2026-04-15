@@ -7,7 +7,6 @@
 {{-- HEADER & FILTER --}}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 p-4 bg-white rounded-2xl shadow-sm border border-gray-100 gap-3">
     <div>
-        {{-- Ikon diganti menjadi kuning --}}
         <h4 class="font-bold text-gray-800 mb-0 text-lg md:text-xl"><i class="bi bi-patch-question-fill text-yellow-500 me-2"></i>Bank Soal & Kuis</h4>
         <p class="text-xs text-gray-400 mt-1 mb-0">Kelola pertanyaan untuk materi bertipe kuis.</p>
     </div>
@@ -33,7 +32,6 @@
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition h-100 d-flex flex-column">
                 <div class="p-4 flex-grow-1">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        {{-- Badge diganti kuning --}}
                         <span class="badge bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg px-2 py-1 text-[10px] uppercase font-bold">
                             {{ $q->course->nama_mk }}
                         </span>
@@ -61,7 +59,6 @@
                 </div>
                 
                 <div class="p-3 border-top bg-gray-50 rounded-b-2xl">
-                    {{-- Tombol Kelola diganti Kuning menyesuaikan Navbar --}}
                     <button class="btn w-100 rounded-xl font-bold text-sm py-2 shadow-sm text-gray-800 hover:opacity-80 transition" 
                             style="background-color: #ffc107; border: none;" 
                             data-bs-toggle="modal" data-bs-target="#modalSoal{{ $q->id }}">
@@ -81,16 +78,14 @@
     </div>
 @endif
 
-{{-- MODAL KELOLA SOAL (SPLIT LAYOUT: KIRI LIST, KANAN FORM) --}}
+{{-- MODAL KELOLA SOAL --}}
 @foreach($quizzes as $q)
 <div class="modal fade" id="modalSoal{{ $q->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content rounded-2xl border-0 shadow-2xl h-[90vh]">
             
-            {{-- HEADER MODAL --}}
             <div class="modal-header border-bottom bg-white p-4">
                 <div>
-                    {{-- Ikon & Teks diganti kuning --}}
                     <h5 class="modal-title font-bold text-gray-800"><i class="bi bi-collection-play me-2 text-yellow-500"></i>{{ $q->judul_materi }}</h5>
                     <p class="mb-0 text-xs text-gray-400">Total Soal: <strong class="text-yellow-600">{{ $q->questions_count }}</strong></p>
                 </div>
@@ -100,7 +95,7 @@
             <div class="modal-body p-0 bg-gray-50">
                 <div class="row g-0 h-100">
                     
-                    {{-- KOLOM KIRI: DAFTAR SOAL (SCROLLABLE) --}}
+                    {{-- KOLOM KIRI: DAFTAR SOAL --}}
                     <div class="col-lg-7 border-end h-100 overflow-auto no-scrollbar custom-scroll">
                         <div class="p-4">
                             <h6 class="text-xs font-bold text-gray-500 uppercase mb-3 sticky top-0 bg-gray-50 z-10 py-2">Daftar Pertanyaan</h6>
@@ -111,7 +106,6 @@
                                     <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm group relative">
                                         <div class="d-flex justify-content-between gap-2">
                                             <div class="flex-grow-1">
-                                                {{-- Nomor diganti kuning --}}
                                                 <p class="font-bold text-gray-800 text-sm mb-2"><span class="text-yellow-600 me-1">#{{ $loop->iteration }}</span> {{ $soal->pertanyaan }}</p>
                                                 <div class="d-grid grid-cols-2 gap-2">
                                                     @foreach(['a','b','c','d'] as $opt)
@@ -143,10 +137,9 @@
                         </div>
                     </div>
 
-                    {{-- KOLOM KANAN: FORM INPUT (STICKY) --}}
+                    {{-- KOLOM KANAN: FORM INPUT --}}
                     <div class="col-lg-5 bg-white h-100 overflow-auto">
                         <div class="p-4">
-                            {{-- Info Banner diganti Kuning --}}
                             <div class="bg-yellow-50 p-3 rounded-xl mb-4 border border-yellow-200">
                                 <h6 class="font-bold text-yellow-700 text-sm mb-1"><i class="bi bi-plus-circle me-1"></i> Tambah Soal Baru</h6>
                                 <p class="text-[10px] text-yellow-600 mb-0">Isi pertanyaan dan opsi jawaban di bawah ini.</p>
@@ -158,7 +151,6 @@
                                 
                                 <div class="mb-3">
                                     <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Pertanyaan</label>
-                                    {{-- Ring focus diganti kuning --}}
                                     <textarea name="pertanyaan" class="form-control rounded-xl bg-gray-50 border-0 focus:bg-white focus:ring-2 ring-yellow-300 transition" rows="3" required placeholder="Tulis pertanyaan..."></textarea>
                                 </div>
 
@@ -185,7 +177,6 @@
                                     </select>
                                 </div>
 
-                                {{-- Tombol Simpan diganti Kuning menyesuaikan Navbar --}}
                                 <button type="submit" class="btn w-100 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transition text-gray-800 hover:opacity-80" style="background-color: #ffc107; border: none;">
                                     <i class="bi bi-save me-1"></i> Simpan Soal
                                 </button>
@@ -201,11 +192,24 @@
 @endforeach
 
 <style>
-    /* Custom Scrollbar untuk bagian daftar soal */
     .custom-scroll::-webkit-scrollbar { width: 4px; display: block; }
     .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 </style>
+
+{{-- SCRIPT UNTUK MENAHAN MODAL TETAP TERBUKA SETELAH SUBMIT/DELETE --}}
+@if(session('open_modal'))
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var modalId = 'modalSoal{{ session("open_modal") }}';
+        var modalElement = document.getElementById(modalId);
+        if (modalElement) {
+            var myModal = new bootstrap.Modal(modalElement);
+            myModal.show();
+        }
+    });
+</script>
+@endif
 
 @endsection
