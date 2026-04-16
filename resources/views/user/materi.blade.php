@@ -62,32 +62,65 @@
                             </div>
                         </div>
                     @else
-                        <form action="{{ url('/proses-kuis') }}" method="POST">
+                        {{-- FIX KUIS: Desain Slide, Tombol A/B/C/D dan Auto-Next --}}
+                        <form action="{{ url('/proses-kuis') }}" method="POST" id="quizForm">
                             @csrf
                             <input type="hidden" name="material_id" value="{{ $materi->id }}">
                             <input type="hidden" name="course_id" value="{{ $course_id }}">
                             <input type="hidden" name="urutan" value="{{ $urutan }}">
                             
-                            @forelse($soal_kuis as $index => $soal)
-                                <div class="mb-3 p-3 border rounded-lg bg-gray-50 hover:bg-white transition">
-                                    <p class="font-semibold text-sm md:text-base mb-2">{{ $index + 1 }}. {{ $soal->pertanyaan }}</p>
-                                    <div class="d-flex flex-column gap-2">
-                                        @foreach(['a','b','c','d'] as $opt)
-                                            <label class="d-flex align-items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-100 bg-white">
-                                                <input class="form-check-input mt-0" type="radio" name="jawaban[{{ $soal->id }}]" value="{{ $opt }}" required>
-                                                <span class="text-xs md:text-sm">{{ $soal->{'opsi_'.$opt} }}</span>
-                                            </label>
-                                        @endforeach
+                            <div id="quiz-container">
+                                @forelse($soal_kuis as $index => $soal)
+                                    <div class="quiz-slide animate-fade-in-up" id="slide-{{ $index }}" style="display: {{ $index == 0 ? 'block' : 'none' }};">
+                                        <div class="mb-3 p-4 border rounded-xl bg-gray-50 shadow-sm">
+                                            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                                <span class="badge font-bold px-3 py-2 text-[10px] md:text-xs" style="background-color: #2d3748; color: #FACC15;">
+                                                    Soal {{ $index + 1 }} dari {{ count($soal_kuis) }}
+                                                </span>
+                                            </div>
+                                            <p class="font-semibold text-sm md:text-base mb-4">{{ $soal->pertanyaan }}</p>
+                                            
+                                            <div class="d-flex flex-column gap-3">
+                                                @foreach(['a','b','c','d'] as $opt)
+                                                    <label class="quiz-option p-3 rounded-lg cursor-pointer transition d-flex align-items-center gap-3 shadow-sm hover:shadow" 
+                                                           style="border: 2px solid #dee2e6; background-color: #ffffff;" 
+                                                           data-soal="{{ $index }}">
+                                                        
+                                                        {{-- Sembunyikan radio button asli --}}
+                                                        <input type="radio" name="jawaban[{{ $soal->id }}]" value="{{ $opt }}" class="d-none option-input" required onchange="selectOption({{ $index }}, this)">
+                                                        
+                                                        {{-- Kotak Indikator Huruf --}}
+                                                        <div class="letter-box d-flex align-items-center justify-content-center fw-bold rounded text-sm transition" 
+                                                             style="width: 35px; height: 35px; background-color: #e5e7eb; color: #374151;">
+                                                            {{ strtoupper($opt) }}
+                                                        </div>
+                                                        
+                                                        <span class="text-xs md:text-sm flex-grow-1 font-medium">{{ $soal->{'opsi_'.$opt} }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            @empty
-                                <div class="alert alert-warning text-sm">Belum ada soal untuk kuis ini.</div>
-                            @endforelse
+                                @empty
+                                    <div class="alert alert-warning text-sm">Belum ada soal untuk kuis ini.</div>
+                                @endforelse
+                            </div>
 
+                            {{-- Navigasi Bawah Kuis --}}
                             @if(count($soal_kuis) > 0)
-                                <button type="submit" class="btn btn-primary w-100 py-2 font-bold text-sm md:text-base rounded-lg shadow-md hover:bg-blue-700 transition">
-                                    Kirim Jawaban <i class="bi bi-send-fill ms-2"></i>
-                                </button>
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+                                    <button type="button" class="btn fw-bold px-4 py-2 rounded-lg shadow-sm" id="btnPrev" style="background-color: #2d3748; color: #FACC15; display: none;" onclick="prevSlide()">
+                                        <i class="bi bi-arrow-left me-1"></i> Kembali
+                                    </button>
+                                    
+                                    <button type="button" class="btn fw-bold px-4 py-2 rounded-lg shadow-sm ms-auto" id="btnNext" style="background-color: #FACC15; color: #2d3748;" onclick="nextSlide()">
+                                        Berikutnya <i class="bi bi-arrow-right ms-1"></i>
+                                    </button>
+
+                                    <button type="submit" class="btn fw-bold px-4 py-2 rounded-lg shadow-sm ms-auto" id="btnSubmit" style="background-color: #2d3748; color: #FACC15; display: none;">
+                                        Kirim Jawaban <i class="bi bi-send-fill ms-1"></i>
+                                    </button>
+                                </div>
                             @endif
                         </form>
                     @endif
@@ -354,6 +387,81 @@
         $urlStorage = asset('storage/profiles') . '/';
         $urlDefault = asset('images/logo_ukit.png');
     @endphp
+
+    {{-- SCRIPT KHUSUS KUIS (TAMPILKAN JIKA SEDANG DI KUIS) --}}
+    @if($materi->kategori == 'quiz' && count($soal_kuis) > 0)
+    <script>
+        let currentSlide = 0;
+        const totalSlides = {{ count($soal_kuis) }};
+
+        function updateButtons() {
+            document.getElementById('btnPrev').style.display = currentSlide > 0 ? 'inline-block' : 'none';
+            
+            if (currentSlide === totalSlides - 1) {
+                document.getElementById('btnNext').style.display = 'none';
+                document.getElementById('btnSubmit').style.display = 'inline-block';
+            } else {
+                document.getElementById('btnNext').style.display = 'inline-block';
+                document.getElementById('btnSubmit').style.display = 'none';
+            }
+        }
+
+        function showSlide(index) {
+            document.querySelectorAll('.quiz-slide').forEach((slide, i) => {
+                slide.style.display = (i === index) ? 'block' : 'none';
+            });
+            updateButtons();
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        function selectOption(slideIndex, radioElement) {
+            const slide = document.getElementById('slide-' + slideIndex);
+            
+            // Reset gaya semua opsi pada slide aktif ke default
+            slide.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.style.borderColor = '#dee2e6';
+                opt.style.backgroundColor = '#ffffff';
+                const letterBox = opt.querySelector('.letter-box');
+                letterBox.style.backgroundColor = '#e5e7eb';
+                letterBox.style.color = '#374151';
+            });
+
+            // Beri warna khusus (Hitam-Kuning) pada opsi yang dipilih
+            const selectedLabel = radioElement.closest('.quiz-option');
+            selectedLabel.style.borderColor = '#FACC15';
+            selectedLabel.style.backgroundColor = '#fffcf0'; 
+            const letterBox = selectedLabel.querySelector('.letter-box');
+            letterBox.style.backgroundColor = '#FACC15';
+            letterBox.style.color = '#000000';
+
+            // Pindah slide otomatis setelah jeda waktu (400ms untuk UX mulus)
+            setTimeout(() => {
+                if (currentSlide < totalSlides - 1) {
+                    nextSlide();
+                }
+            }, 400); 
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            showSlide(currentSlide);
+        });
+    </script>
+    @endif
+
+    {{-- SCRIPT FORUM DISKUSI BAWAAN --}}
     <script>
         const storageUrl = {!! json_encode($urlStorage) !!};
         const defaultUrl = {!! json_encode($urlDefault) !!};

@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - E-Learning UKI Toraja</title>
 
+    <link rel="icon" type="image/png" href="{{ asset('images/logo_ukit.png') }}">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -18,17 +20,14 @@
 
     <div class="bg-login d-flex justify-content-center align-items-center min-h-screen">
 
-        {{-- UPDATE: Tambah 'w-full max-w-sm' agar lebar terkunci kecil, dan 'p-4' agar padding berkurang --}}
         <div class="login-card p-4 mx-3 animate-fade-in-up w-full max-w-[360px]">
 
             <div class="text-center mb-3">
-                {{-- Logo diperkecil (h-16) --}}
                 <img src="{{ asset('images/logo_ukit.png') }}" alt="Logo UKI Toraja"
                     class="mx-auto h-16 w-auto drop-shadow-md">
             </div>
 
             <div class="text-center mb-4">
-                {{-- Font sedikit diperkecil --}}
                 <h4 class="font-bold text-gray-800 text-base">SELAMAT DATANG</h4>
                 <p class="text-gray-500 text-xs">
                     E-Learning Universitas Kristen Indonesia Toraja
@@ -48,7 +47,6 @@
 
                 <div class="mb-3">
                     <label class="form-label text-xs font-bold text-gray-600 uppercase tracking-wide">NIM / NIDN</label>
-                    {{-- Input size disesuaikan (text-sm) --}}
                     <input type="text" name="nim" class="form-control py-2 text-sm" placeholder="Masukkan NIM / NIDN"
                         required autocomplete="off">
                 </div>
