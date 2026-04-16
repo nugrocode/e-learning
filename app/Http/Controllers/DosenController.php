@@ -189,9 +189,10 @@ class DosenController extends Controller
     public function materiStore(Request $request)
     {
         $request->validate(['judul_materi' => 'required', 'course_id' => 'required']);
-        $urutan = 0;
         
-        // Logika insert after (untuk Kuis dll)
+        $urutan = 0; // Default pasti 0 (Pending)
+        
+        // Logika insert after (Khusus jika nambah Kuis dan langsung disisipkan)
         if ($request->kategori == 'quiz') {
             if ($request->filled('insert_after')) {
                 if ($request->insert_after == 'start') {
@@ -206,9 +207,8 @@ class DosenController extends Controller
                 $urutan = $last + 1;
             }
         } else {
-            // Default Video masuk antrean (0) atau paling bawah
-             $last = Material::where('course_id', $request->course_id)->max('urutan');
-             $urutan = $last + 1;
+            // [PERBAIKAN UTAMA]: Video/Materi biasa WAJIB masuk antrean Pending (0)
+            $urutan = 0;
         }
 
         $filename = null;
@@ -239,10 +239,10 @@ class DosenController extends Controller
             'video_url' => $videoUrl,
             'link_drive' => $linkDrive,
             'file_lampiran' => $filename,
-            'urutan' => $urutan
+            'urutan' => $urutan // <-- Masuk ke Pending (0)
         ]);
         
-        return back()->with('success', 'Materi berhasil ditambahkan.');
+        return back()->with('success', 'Materi berhasil ditambahkan ke daftar Pending.');
     }
 
     public function materiUpdate(Request $request, $id)
@@ -299,54 +299,103 @@ class DosenController extends Controller
     // ==========================================================
     public function aiSmartInsert($course_id)
     {
+        set_time_limit(300);
         $existing = Material::where('course_id', $course_id)->where('urutan', '>', 0)->orderBy('urutan', 'asc')->get();
         $newMats = Material::where('course_id', $course_id)->where('urutan', 0)->get();
         
         if ($newMats->isEmpty()) return back()->with('error', 'Tidak ada materi baru di antrean.');
         
-        $existingData = $existing->map(function($m) { return "ID:{$m->id} | Judul: {$m->judul_materi}"; })->implode("\n");
+        if ($existing->isEmpty()) {
+            $urutan = 1;
+            foreach($newMats as $nm) {
+                $nm->update(['urutan' => $urutan++]);
+            }
+            return back()->with('success', 'Materi berhasil dimasukkan sebagai materi pertama.');
+        }
         
         foreach ($newMats as $nm) {
-            $prompt = "Anda adalah Ahli Kurikulum. Sisipkan materi: '{$nm->judul_materi}' ke dalam silabus: {$existingData}. Jawab JSON: {'insert_after_id': ID}.";
+            // Format list diperjelas agar AI gampang baca ID-nya
+            $existingData = $existing->map(function($m) { 
+                return "- ID: {$m->id} | Judul: {$m->judul_materi}"; 
+            })->implode("\n");
+            
+            // PROMPT DIPERTAJAM: Paksa AI mencari "materi dasar yang berkaitan"
+            $prompt = "Kamu adalah Pakar Penyusun Kurikulum.\n\n"
+                    . "Ini adalah daftar materi yang sudah terurut:\n"
+                    . "{$existingData}\n\n"
+                    . "Materi Sisipan Baru: \"{$nm->judul_materi}\".\n\n"
+                    . "Tugas Khusus: Cari materi yang paling berkaitan erat (materi prasyarat/dasarnya) dari daftar di atas, lalu ambil ID-nya. "
+                    . "Materi baru ini harus disisipkan logis tepat SETELAH materi tersebut.\n\n"
+                    . "WAJIB BALAS HANYA DENGAN JSON OBJECT STRICT SEPERTI INI (Tanpa teks penjelasan apapun):\n"
+                    . "{\"insert_after_id\": ANGKA_ID}";
+            
             $result = $this->gemini->ask($prompt, true);
-            $targetId = $result['insert_after_id'] ?? 0;
+            $targetId = $result['insert_after_id'] ?? null;
             
             $targetUrutan = 0;
-            if ($targetId != 0) {
+            
+            if ($targetId !== null && $targetId != 0) {
                 $ref = Material::find($targetId);
+                // Validasi ketat jika AI memberikan ID yang memang ada di kelas ini
                 if ($ref && $ref->course_id == $course_id) {
                     $targetUrutan = $ref->urutan;
+                } else {
+                    $targetUrutan = $existing->max('urutan');
                 }
+            } elseif ($targetId === null) {
+                $targetUrutan = $existing->max('urutan');
             }
             
+            // Geser urutan ke bawah untuk memberi ruang
             Material::where('course_id', $course_id)->where('urutan', '>', $targetUrutan)->increment('urutan');
+            
+            // Sisipkan materi di posisi cerdasnya
             $nm->update(['urutan' => $targetUrutan + 1]);
             
-            // Refresh existing data untuk loop berikutnya
+            // Refresh struktur untuk materi pending berikutnya (jika ada lebih dari 1)
             $existing = Material::where('course_id', $course_id)->where('urutan', '>', 0)->orderBy('urutan', 'asc')->get();
-            $existingData = $existing->map(function($m) { return "ID:{$m->id} | Judul: {$m->judul_materi}"; })->implode("\n");
         }
+        
         $this->reorderMaterials($course_id);
-        return back()->with('success', 'AI berhasil menyisipkan materi.');
+        return back()->with('success', 'AI berhasil menyisipkan materi secara cerdas!');
     }
 
     public function aiAutoSort($course_id)
     {
+        set_time_limit(300); // Cegah timeout
+        
         $materials = Material::where('course_id', $course_id)->get();
         if ($materials->isEmpty()) return back()->with('error', 'Materi kosong.');
         
-        $data = $materials->map(function($m) { return "ID:{$m->id} | Judul:{$m->judul_materi} | Tipe:{$m->kategori}"; })->implode("\n");
-        $prompt = "Urutkan materi berikut secara logis (Dasar -> Lanjut). Data: {$data}. Output JSON: [ID1, ID2, ...]";
+        // Memasukkan sedikit deskripsi agar AI lebih paham konteks materinya
+        $data = $materials->map(function($m) { 
+            $desc = substr($m->deskripsi_materi, 0, 100);
+            return "- ID: {$m->id} | Judul: {$m->judul_materi} | Tipe: {$m->kategori} | Info: {$desc}"; 
+        })->implode("\n");
         
-        $sortedIDs = $this->gemini->ask($prompt, true);
+        $prompt = "Kamu adalah Pakar Kurikulum IT dan Desain Pembelajaran.\n\n"
+                . "Tugasmu mengurutkan ulang daftar materi acak ini menjadi alur belajar (Learning Path) yang sangat logis bagi mahasiswa, dari tingkat DASAR hingga LANJUTAN.\n\n"
+                . "ATURAN PENGURUTAN:\n"
+                . "1. Materi pengenalan, konsep dasar, dan teori WAJIB di urutan awal.\n"
+                . "2. Materi tingkat lanjut, praktik, atau implementasi ditaruh setelah dasar-dasarnya.\n"
+                . "3. Jika ada materi bertipe 'quiz', posisikan tepat SETELAH materi video yang topiknya paling berkaitan (jangan menaruh kuis di awal sebelum materi diajarkan).\n\n"
+                . "DAFTAR MATERI ACAK:\n"
+                . "{$data}\n\n"
+                . "WAJIB BALAS HANYA DENGAN JSON OBJECT STRICT SEPERTI INI (Tanpa teks tambahan apapun):\n"
+                . "{\"sorted_ids\": [ID_PERTAMA, ID_KEDUA, ID_KETIGA]}";
         
-        if (is_array($sortedIDs) && count($sortedIDs) > 0) {
+        $response = $this->gemini->ask($prompt, true);
+        $sortedIDs = $response['sorted_ids'] ?? null;
+        
+        // Pastikan AI membalas Array dan jumlah ID yang dikembalikan sama dengan jumlah materi
+        if (is_array($sortedIDs) && count($sortedIDs) === $materials->count()) {
             foreach ($sortedIDs as $idx => $id) {
                 Material::where('id', $id)->update(['urutan' => $idx + 1]);
             }
-            return back()->with('success', 'Materi disusun ulang oleh AI.');
+            return back()->with('success', 'Luar Biasa! Materi berhasil disusun ulang menjadi alur belajar yang sangat terstruktur oleh AI.');
         }
-        return back()->with('error', 'AI gagal memberikan respon.');
+        
+        return back()->with('error', 'AI gagal merespons dengan format urutan yang tepat. Silakan klik tombol sekali lagi.');
     }
 
     // ==========================================================

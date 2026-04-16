@@ -117,7 +117,7 @@
                 <a href="{{ url('/admin/kurikulum') }}" 
                    class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
                    {{ Request::is('admin/kurikulum*') ? 'active-menu' : '' }}">
-                    <i class="bi bi-collection-fill text-lg"></i> Distribusi Kurikulum
+                    <i class="bi bi-collection-fill text-lg"></i> Distribusi Mata kuliah
                 </a>
                 <a href="{{ url('/admin/pengumuman') }}" 
                    class="list-group-item bg-transparent border-0 d-flex align-items-center gap-3 px-4 py-3 transition-colors duration-200 
