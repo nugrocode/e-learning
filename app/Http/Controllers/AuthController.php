@@ -24,10 +24,9 @@ class AuthController extends Controller
     {
         // 1. Tangkap Input
         $nim = $request->input('nim');
-        // Catatan: Menggunakan MD5 sesuai database kamu (meskipun tidak disarankan untuk production modern)
         $password = md5($request->input('password')); 
 
-        // 2. Cari User berdasarkan nim_nidn DAN password
+        // 2. Cek di Database
         $user = User::where('nim_nidn', $nim)
                     ->where('password', $password)
                     ->first();
@@ -46,7 +45,7 @@ class AuthController extends Controller
                 return redirect('/admin/dashboard')->with('success', 'Selamat Datang Admin!');
             } 
             elseif ($user->role == 'dosen') {
-                // Pastikan route /dosen/dashboard nanti dibuat
+
                 return redirect('/dosen/dashboard')->with('success', 'Selamat Datang Dosen!');
             } 
             else {

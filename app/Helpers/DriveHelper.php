@@ -8,7 +8,7 @@ use Google\Service\Drive\DriveFile;
 
 class DriveHelper
 {
-    // Tambahkan parameter ke-3: $folderId
+
     public static function uploadToDosenDrive($file, $dosen, $folderId = null)
     {
         $client = new GoogleClient();
@@ -29,12 +29,12 @@ class DriveHelper
 
         $service = new GoogleDrive($client);
         
-        // SETUP METADATA FILE
+
         $fileMetadataConfig = [
             'name' => time() . '_' . $file->getClientOriginalName(),
         ];
 
-        // LOGIKA BARU: Jika ada ID Folder, masukkan file ke folder itu
+
         if ($folderId) {
             $fileMetadataConfig['parents'] = [$folderId];
         }

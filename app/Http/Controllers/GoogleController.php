@@ -87,7 +87,6 @@ class GoogleController extends Controller
         $user->google_refresh_token = null;
         $user->save();
 
-        // Notifikasi sukses dihilangkan, hanya redirect biasa
         return redirect('/dosen/profil');
     }
 }
