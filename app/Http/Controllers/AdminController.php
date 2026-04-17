@@ -459,7 +459,7 @@ class AdminController extends Controller
         return back()->with('error', 'AI gagal merespons dengan format yang valid. Silakan klik tombol sekali lagi.');
     }
 
-    // [FIX] Mengubah Prompt agar mengembalikan JSON Object { "sorted_ids": [...] }
+   
     public function resetKurikulum($concentration_id) {
         set_time_limit(300); 
         
@@ -497,40 +497,93 @@ class AdminController extends Controller
     }
 
     public function updateKurikulum($concentration_id) {
+        set_time_limit(300);
         $konsentrasi = Concentration::findOrFail($concentration_id);
         
-        $existing = $konsentrasi->courses()->wherePivot('urutan', '>', 0)->orderBy('concentration_course.urutan', 'asc')->get();
         $pending = $konsentrasi->courses()->wherePivot('urutan', 0)->get();
 
-        if ($pending->isEmpty()) return back()->with('error', 'Tidak ada MK baru yang perlu disisipkan.');
+        if ($pending->isEmpty()) {
+            return back()->with('error', 'Tidak ada mata kuliah baru yang perlu disisipkan.');
+        }
+
+        $berhasil = 0;
+        $gagal = 0;
 
         foreach ($pending as $newCourse) {
-            $prompt = "List MK Kurikulum saat ini (Urut): " . $existing->pluck('nama_mk', 'id') . ". \nMK Baru yang mau masuk: {$newCourse->nama_mk}. \nDi posisi mana (setelah ID berapa) MK Baru ini harus disisipkan agar kurikulum tetap logis? Jawab JSON: {'insert_after_id': ID_TARGET} (Jawab 0 jika harus di awal).";
+            $existing = $konsentrasi->courses()
+                ->wherePivot('urutan', '>', 0)
+                ->orderBy('concentration_course.urutan', 'asc')
+                ->get();
+
+            if ($existing->isEmpty()) {
+                $konsentrasi->courses()->updateExistingPivot($newCourse->id, ['urutan' => 1]);
+                $berhasil++;
+                continue;
+            }
+
+            $listExisting = $existing->map(function($c) { 
+                return "ID: {$c->id} | Nama: {$c->nama_mk}"; 
+            })->implode("\n");
+
+            $prompt = "
+                Anda adalah Pakar Kurikulum IT.
+                Berikut adalah urutan kurikulum saat ini dari tingkat dasar hingga akhir:
+                {$listExisting}
+
+                Terdapat Mata Kuliah Baru yang belum memiliki posisi: '{$newCourse->nama_mk}'
+                
+                Tugas Anda HANYA SATU: Tentukan posisi (ID mata kuliah) yang paling tepat SEBELUM mata kuliah baru ini.
+                Aturan Mutlak:
+                1. Jika mata kuliah baru ini adalah materi sangat dasar dan harus berada di paling awal, wajib jawab dengan angka 0.
+                2. Anda HANYA boleh memilih ID yang ada pada daftar di atas. Jangan mengarang ID.
+                3. Berikan jawaban murni dalam format JSON.
+                
+                Balas HANYA dengan format JSON seperti ini:
+                {\"insert_after_id\": <angka_id>}
+            ";
             
             $result = $this->gemini->ask($prompt, true);
-            $targetId = $result['insert_after_id'] ?? null;
+            
+            $targetId = null;
 
-            if ($targetId !== null) {
-                $targetUrutan = 0;
-                
-                if ($targetId != 0) {
-                    $ref = DB::table('concentration_course')
-                        ->where('concentration_id', $concentration_id)
-                        ->where('course_id', $targetId)
-                        ->first();
-                    if ($ref) $targetUrutan = $ref->urutan;
-                }
-                
-                DB::table('concentration_course')
-                    ->where('concentration_id', $concentration_id)
-                    ->where('urutan', '>', $targetUrutan)
-                    ->increment('urutan');
-                
-                $konsentrasi->courses()->updateExistingPivot($newCourse->id, ['urutan' => $targetUrutan + 1]);
-                
-                $existing = $konsentrasi->courses()->wherePivot('urutan', '>', 0)->orderBy('concentration_course.urutan', 'asc')->get();
+            if (is_array($result) && array_key_exists('insert_after_id', $result) && is_numeric($result['insert_after_id'])) {
+                $targetId = (int) $result['insert_after_id'];
+            } 
+            
+            if ($targetId === null) {
+                $gagal++;
+                continue;
             }
+
+            $targetUrutan = 0;
+            
+            if ($targetId !== 0) {
+                $ref = DB::table('concentration_course')
+                    ->where('concentration_id', $concentration_id)
+                    ->where('course_id', $targetId)
+                    ->first();
+                    
+                if ($ref) {
+                    $targetUrutan = $ref->urutan;
+                } else {
+                    $targetUrutan = $existing->max('pivot.urutan') ?? 0;
+                }
+            }
+            
+            DB::table('concentration_course')
+                ->where('concentration_id', $concentration_id)
+                ->where('urutan', '>', $targetUrutan)
+                ->increment('urutan');
+            
+            $konsentrasi->courses()->updateExistingPivot($newCourse->id, ['urutan' => $targetUrutan + 1]);
+            $berhasil++;
         }
-        return back()->with('success', 'Mata Kuliah baru berhasil disisipkan secara cerdas!');
+        
+        $pesan = "Proses selesai! {$berhasil} Mata Kuliah berhasil disisipkan 100% oleh AI.";
+        if ($gagal > 0) {
+            $pesan .= " Namun, AI tidak dapat menentukan posisi untuk {$gagal} Mata Kuliah, silakan klik tombol sekali lagi.";
+        }
+        
+        return back()->with('success', $pesan);
     }
 }

@@ -33,21 +33,32 @@
         </div>
     @endif
 
-    {{-- [FIX] BLOK PENDING INI SEBELUMNYA HILANG --}}
+    {{-- BLOK PENDING: Tempat MK baru yang belum memiliki urutan --}}
     @if($new_courses->count() > 0)
         <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-5 animate-fade-in-up">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="font-bold text-yellow-800 m-0 flex items-center gap-2">
                     <i class="bi bi-exclamation-circle-fill"></i> Pending (Belum Diurutkan)
                 </h5>
-                {{-- Jika kurikulum kosong, gunakan Re-Sort. Jika sudah ada isinya, gunakan Auto-Insert --}}
-                <form action="{{ url('/admin/kurikulum/' . ($courses->count() == 0 ? 'reset' : 'update') . '/' . $konsentrasi->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn font-bold shadow-sm transition text-sm px-3 py-2 rounded-lg" 
-                            style="background-color: #FACC15; color: #2d3748; border: none;">
-                        <i class="bi bi-stars"></i> AI Auto-Sort
-                    </button>
-                </form>
+                
+                {{-- Logika Tombol: Jika kurikulum masih kosong gunakan Re-Sort, jika sudah ada isinya gunakan Smart Insert (Update) --}}
+                @if($courses->count() == 0)
+                    <form action="{{ url('/admin/kurikulum/reset/' . $konsentrasi->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn font-bold shadow-sm transition text-sm px-3 py-2 rounded-lg" 
+                                style="background-color: #FACC15; color: #2d3748; border: none;">
+                            <i class="bi bi-stars"></i> AI Auto-Sort
+                        </button>
+                    </form>
+                @else
+                    <form action="{{ url('/admin/kurikulum/update/' . $konsentrasi->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn font-bold shadow-sm transition text-sm px-3 py-2 rounded-lg" 
+                                style="background-color: #FACC15; color: #2d3748; border: none;">
+                            <i class="bi bi-stars"></i> AI Smart Insert
+                        </button>
+                    </form>
+                @endif
             </div>
             <div class="row g-3">
                 @foreach($new_courses as $mk)
@@ -102,7 +113,7 @@
                                     @endif
                                     <div>
                                         <strong class="text-gray-800 d-block">{{ $mk->nama_mk }}</strong>
-                                        <span class="text-xs text-gray-400">ID: {{ $mk->id }}</span>
+                                        {{-- <span class="text-xs text-gray-400">ID: {{ $mk->id }}</span> --}}
                                     </div>
                                 </div>
                             </td>
@@ -143,7 +154,7 @@
                             </td>
                         </tr>
 
-                        {{-- MODAL EDIT --}}
+                        {{-- MODAL EDIT MASTER MK --}}
                         <div class="modal fade" id="modalEdit{{ $mk->id }}" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content rounded-xl border-0 shadow-lg">
@@ -193,7 +204,7 @@
         </div>
     </div>
 
-    {{-- MODAL TAMBAH MK --}}
+    {{-- MODAL TAMBAH / AMBIL MK --}}
     <div class="modal fade" id="modalTambahMK" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-xl border-0 shadow-lg">
@@ -234,6 +245,6 @@
                     </div>
                 </form>
             </div>
-        </div>
+        </div> 
     </div>
 @endsection

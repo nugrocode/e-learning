@@ -43,8 +43,7 @@ class GeminiService
                 $rawText = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? '';
 
                 if ($isJson) {
-                    // Karena sudah pakai Native JSON Mode, teks bisa langsung di-decode
-                    // Namun tetap kita bersihkan dari backticks (jaga-jaga)
+
                     $cleanText = str_replace(['```json', '```', '`'], '', $rawText);
                     $jsonResult = json_decode(trim($cleanText), true);
 
