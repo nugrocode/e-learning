@@ -17,7 +17,7 @@ use App\Models\Material;
 
 class AdminController extends Controller
 {
-    protected $gemini;
+    protected GeminiService $gemini;
 
     public function __construct(GeminiService $geminiService)
     {
@@ -136,7 +136,7 @@ class AdminController extends Controller
         return back()->with('success', 'Pengguna baru berhasil ditambahkan!');
     }
 
-    public function userUpdate(Request $request, $id) {
+    public function userUpdate(Request $request, string $id) {
         $user = User::findOrFail($id);
         $request->validate([
             'nim' => 'required|unique:users,nim_nidn,'.$id,
@@ -174,7 +174,7 @@ class AdminController extends Controller
         return back()->with('success', 'Data pengguna diperbarui!');
     }
 
-    public function userDestroy($id) {
+    public function userDestroy(string $id) {
         if ($id == Session::get('user_id')) {
             return back()->with('error', 'Anda tidak dapat menghapus akun sendiri!');
         }
@@ -206,12 +206,12 @@ class AdminController extends Controller
         return back()->with('success', 'Pengumuman diterbitkan!'); 
     }
 
-    public function pengumumanUpdate(Request $request, $id) { 
+    public function pengumumanUpdate(Request $request, string $id) { 
         Announcement::findOrFail($id)->update($request->all()); 
         return back()->with('success', 'Pengumuman diperbarui!'); 
     }
 
-    public function pengumumanDestroy($id) { 
+    public function pengumumanDestroy(string $id) { 
         Announcement::findOrFail($id)->delete(); 
         return back()->with('success', 'Pengumuman dihapus.'); 
     }
@@ -239,7 +239,7 @@ class AdminController extends Controller
         return back()->with('success', 'Prodi ditambahkan!');
     }
     
-    public function konsentrasiUpdate(Request $request, $id) {
+    public function konsentrasiUpdate(Request $request, string $id) {
         $k = Concentration::findOrFail($id);
         if ($request->hasFile('gambar')) { 
             if ($k->gambar) Storage::disk('public')->delete('thumbnails/' . $k->gambar);
@@ -252,7 +252,7 @@ class AdminController extends Controller
         return back()->with('success', 'Data diperbarui!');
     }
     
-    public function konsentrasiDestroy($id) { 
+    public function konsentrasiDestroy(string $id) { 
         $k = Concentration::findOrFail($id);
         if ($k->gambar) Storage::disk('public')->delete('thumbnails/' . $k->gambar);
         $k->delete(); 
@@ -288,7 +288,7 @@ class AdminController extends Controller
         return back()->with('success', 'Mata Kuliah baru ditambahkan ke Bank Data.');
     }
 
-    public function bankUpdate(Request $request, $id) {
+    public function bankUpdate(Request $request, string $id) {
         $c = Course::findOrFail($id);
         $request->validate([
             'nama_mk' => 'required|unique:courses,nama_mk,'.$id,
@@ -308,7 +308,7 @@ class AdminController extends Controller
         return back()->with('success', 'Data Master Mata Kuliah diperbarui.');
     }
 
-    public function bankDestroy($id) {
+    public function bankDestroy(string $id) {
         $c = Course::findOrFail($id);
         if ($c->gambar) Storage::disk('public')->delete('thumbnails/' . $c->gambar);
         
@@ -323,15 +323,12 @@ class AdminController extends Controller
         return view('admin.kurikulum', compact('konsentrasi'));
     }
 
-    // [FIX] Menggunakan Collection Filter untuk mengatasi masalah urutan NULL/0
-    public function kurikulumShow($id) {
+    public function kurikulumShow(string $id) {
         $konsentrasi = Concentration::findOrFail($id);
         $dosens = User::where('role', 'dosen')->get();
 
-        // Ambil semua courses beserta pivotnya sekaligus
         $all_courses = $konsentrasi->courses()->with('dosen')->get();
 
-        // Filter collection langsung di memori PHP (Aman dari bug nilai NULL di DB)
         $courses = $all_courses->filter(function($c) {
             return $c->pivot->urutan > 0;
         })->sortBy('pivot.urutan')->values();
@@ -382,11 +379,11 @@ class AdminController extends Controller
         return back()->with('error', 'Mata Kuliah sudah ada di kurikulum ini.');
     }
 
-    public function courseUpdate(Request $request, $id) {
+    public function courseUpdate(Request $request, string $id) {
         return $this->bankUpdate($request, $id);
     }
 
-    public function courseDestroy($id) {
+    public function courseDestroy(string $id) {
         $concentration_id = request('concentration_id'); 
         
         if($concentration_id) {
@@ -434,7 +431,6 @@ class AdminController extends Controller
 
         $response = $this->gemini->ask($prompt, true);
         
-        // Coba ekstrak data dari object, jika tidak ada fallback ke response asli
         $mappings = $response['data'] ?? $response;
 
         if (is_array($mappings) && count($mappings) > 0) {
@@ -460,7 +456,7 @@ class AdminController extends Controller
     }
 
    
-    public function resetKurikulum($concentration_id) {
+    public function resetKurikulum(string $concentration_id) {
         set_time_limit(300); 
         
         $konsentrasi = Concentration::findOrFail($concentration_id);
@@ -496,7 +492,7 @@ class AdminController extends Controller
         return back()->with('error', 'AI gagal memproses urutan atau ada data yang tertinggal. Silakan coba klik lagi.');
     }
 
-    public function updateKurikulum($concentration_id) {
+    public function updateKurikulum(string $concentration_id) {
         set_time_limit(300);
         $konsentrasi = Concentration::findOrFail($concentration_id);
         

@@ -22,7 +22,7 @@ use App\Models\Announcement;
 
 class MahasiswaController extends Controller
 {
-    protected $gemini;
+    protected GeminiService $gemini;
 
     public function __construct(GeminiService $geminiService)
     {
@@ -70,7 +70,7 @@ class MahasiswaController extends Controller
         return view('user.kelas_saya', compact('courses'));
     }
 
-    public function showCourses($id) 
+    public function showCourses(string $id) 
     {
         Session::put('active_concentration_id', $id);
         $concentration = Concentration::findOrFail($id);
@@ -117,7 +117,7 @@ class MahasiswaController extends Controller
         return view('user.mata_kuliah', compact('concentration', 'courses'));
     }
 
-    public function belajar($course_id, $urutan = 1) 
+    public function belajar(string $course_id, int $urutan = 1) 
     {
         $user_id = Session::get('user_id');
         $materi = Material::with('course')->where('course_id', $course_id)->where('urutan', $urutan)->firstOrFail();
@@ -230,7 +230,7 @@ class MahasiswaController extends Controller
         return back()->with('success', 'Tugas berhasil dikirim!');
     }
 
-    private function saveLocal($file, $user_id) {
+    private function saveLocal(\Illuminate\Http\UploadedFile $file, string $user_id) {
         $filename = time() . '_' . $user_id . '_' . $file->getClientOriginalName();
         $file->storeAs('submissions', $filename, 'public');
         return $filename;
@@ -314,7 +314,7 @@ class MahasiswaController extends Controller
         return back()->with('success', 'Komentar terkirim.'); 
     }
 
-    public function destroyDiscussion($id) 
+    public function destroyDiscussion(string $id) 
     { 
         $d = Discussion::find($id); 
         if ($d && $d->user_id == Session::get('user_id')) { 
@@ -327,7 +327,7 @@ class MahasiswaController extends Controller
 
     public function bantuan() { return view('user.bantuan'); }
     public function diskusi() { return view('user.diskusi'); }
-    public function readNotification($id) 
+    public function readNotification(string $id) 
     { 
         $notif = Notification::findOrFail($id); 
         $notif->update(['is_read' => 1]); 
